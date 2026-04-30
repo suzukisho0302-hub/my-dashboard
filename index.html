@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ja" style="background:#f5f0e8">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="翔の手帳">
+<meta name="theme-color" content="#b45a1e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<title>翔の手帳</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f0e8;--sb:#ede5d5;--card:#ffffff;--card2:#faf7f2;
+  --bd:#e0d5c0;--bd2:#d0c4b0;
+  --ink:#2c2010;--ink2:#6b5840;--ink3:#9a8870;
+  --acc:#b45a1e;--acc2:#785a28;--acc3:#3c6446;--acc4:#466496;
+  --r:12px;--rsm:8px;
+  --sw:220px;--ai:280px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100vh;font-family:'Noto Sans JP',sans-serif;color:var(--ink)}
+
+/* ===================== DESKTOP ===================== */
+.desktop{display:flex;height:100vh;overflow:hidden}
+
+/* LEFT SIDEBAR */
+.sb{width:var(--sw);background:var(--sb);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-logo{padding:20px 16px 14px;border-bottom:1px solid var(--bd)}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink);font-weight:500}
+.sb-logo-sub{font-size:10px;color:var(--ink3);margin-top:2px}
+.sb-nav{padding:8px 0;flex:1}
+.sb-sec{font-size:9px;color:var(--ink3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 14px;font-size:12.5px;color:var(--ink2);cursor:pointer;border-radius:6px;margin:1px 6px;transition:all .15s;user-select:none}
+.ni:hover{background:rgba(0,0,0,0.05);color:var(--ink)}
+.ni.active{background:rgba(181,90,30,0.1);color:var(--acc);font-weight:500}
+.ni-ic{width:15px;height:15px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ni-lbl{flex:1}
+.ni-badge{font-size:10px;color:var(--ink3);background:rgba(0,0,0,0.07);padding:1px 7px;border-radius:10px}
+.ni-arr{font-size:11px;color:var(--ink3);transition:transform .2s;margin-left:auto}
+.ni-arr.open{transform:rotate(90deg)}
+.nacc{overflow:hidden;max-height:0;transition:max-height .25s}
+.nacc.open{max-height:300px}
+.nch{display:flex;align-items:center;gap:8px;padding:5px 14px 5px 38px;font-size:12px;color:var(--ink2);cursor:pointer;border-radius:6px;margin:1px 6px;transition:background .15s}
+.nch:hover{background:rgba(0,0,0,0.04);color:var(--ink)}
+.nch.done{text-decoration:line-through;color:var(--ink3)}
+.nch-dot{width:4px;height:4px;border-radius:50%;background:var(--ink3);flex-shrink:0}
+.sb-bot{padding:12px;border-top:1px solid var(--bd)}
+.sb-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:6px;cursor:pointer;transition:background .15s}
+.sb-user:hover{background:rgba(0,0,0,0.04)}
+.sb-ava{width:28px;height:28px;border-radius:50%;background:var(--acc2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+.sb-uname{font-size:12px;color:var(--ink2)}
+.db-pill{display:flex;align-items:center;gap:6px;margin-top:6px;padding:5px 8px;background:rgba(0,0,0,0.04);border-radius:20px;font-size:10px;color:var(--ink3)}
+.db-dot{width:5px;height:5px;border-radius:50%;background:var(--ink3)}
+.db-dot.on{background:var(--acc3)}
+
+/* MAIN CONTENT */
+.main-area{flex:1;overflow-y:auto;background:var(--bg)}
+.page{display:none;padding:2rem 2.5rem 3rem;max-width:800px}
+.page.active{display:block}
+.page-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.page-sub{font-size:11.5px;color:var(--ink3);margin-bottom:1.5rem}
+
+/* RIGHT AI PANEL */
+.ai-panel-desktop{width:var(--ai);background:var(--card);border-left:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0}
+.ai-ph{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+.ai-ph-icon{width:26px;height:26px;border-radius:7px;background:rgba(181,90,30,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-ph-icon svg{width:13px;height:13px;stroke:var(--acc);stroke-width:2;fill:none;stroke-linecap:round}
+.ai-ph-title{font-size:13px;font-weight:500;color:var(--ink)}
+.ai-ph-sub{font-size:10px;color:var(--ink3)}
+.ai-msgs-wrap{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:85%}
+.ai-msg.bot{align-self:flex-start}
+.ai-msg.user{align-self:flex-end}
+.ai-bubble{padding:9px 12px;font-size:12px;line-height:1.6}
+.ai-msg.bot .ai-bubble{background:var(--bg);border:1px solid var(--bd);border-radius:10px 10px 10px 2px;color:var(--ink2)}
+.ai-msg.user .ai-bubble{background:var(--acc);color:#fff;border-radius:10px 10px 2px 10px}
+.ai-time{font-size:9px;color:var(--ink3);margin-top:3px}
+.ai-msg.user .ai-time{text-align:right}
+.ai-quick-wrap{padding:8px 12px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:4px}
+.ai-qlbl{font-size:9px;color:var(--ink3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px}
+.aq-btn{padding:6px 10px;background:var(--card2);border:1px solid var(--bd);border-radius:7px;font-size:11px;color:var(--ink2);cursor:pointer;text-align:left;font-family:'Noto Sans JP',sans-serif;transition:all .15s}
+.aq-btn:hover{border-color:var(--acc);color:var(--acc)}
+.ai-inp-wrap{padding:10px 12px;border-top:1px solid var(--bd);display:flex;gap:7px}
+.ai-inp{flex:1;padding:8px 11px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--ink);font-size:12px;font-family:'Noto Sans JP',sans-serif;outline:none;resize:none}
+.ai-inp:focus{border-color:var(--acc)}
+.ai-send-btn{padding:8px 13px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;align-self:flex-end}
+.ai-send-btn:hover{opacity:.85}
+
+/* COMMON COMPONENTS */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sec-ttl{font-family:'Playfair Display',serif;font-size:14px;font-weight:500;color:var(--ink);white-space:nowrap}
+.sec-line{flex:1;height:1px;background:var(--bd)}
+.sec-lnk{font-size:11px;color:var(--ink3);cursor:pointer;white-space:nowrap}
+.sec-lnk:hover{color:var(--acc)}
+.blk{margin-bottom:1.8rem}
+.div{height:1px;background:var(--bd);margin:1.5rem 0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.8rem}
+
+/* METRICS */
+.mrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.8rem}
+.met{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px}
+.mv{font-family:'Playfair Display',serif;font-size:22px;line-height:1;margin-bottom:3px;font-weight:500}
+.ml{font-size:10px;color:var(--ink3)}
+
+/* TABLE */
+.tbl-wrap{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{text-align:left;padding:7px 13px;color:var(--ink3);font-weight:400;font-size:10px;border-bottom:1px solid var(--bd);background:var(--card2);letter-spacing:.5px;text-transform:uppercase}
+tbody td{padding:9px 13px;border-bottom:1px solid #f5f0e8;color:var(--ink2);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(0,0,0,.01)}
+.cb{width:14px;height:14px;border:1.5px solid var(--bd2);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s}
+.cb.done{background:var(--acc3);border-color:var(--acc3)}
+.cb.done svg{display:block}
+.cb svg{display:none;width:9px;height:9px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px}
+.tw{background:rgba(70,100,150,.1);color:var(--acc4)}
+.ts{background:rgba(60,100,70,.1);color:var(--acc3)}
+.th{background:rgba(120,90,40,.1);color:var(--acc2)}
+.tbl-add{padding:8px 13px;font-size:11.5px;color:var(--ink3);cursor:pointer;background:var(--card2);border-top:1px solid var(--bd)}
+.tbl-add:hover{color:var(--acc)}
+
+/* CALENDAR */
+.cal-wrap{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:1rem}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cal-btn{background:none;border:1px solid var(--bd);color:var(--ink3);cursor:pointer;padding:4px 10px;border-radius:6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;transition:all .15s}
+.cal-btn:hover{border-color:var(--bd2);color:var(--ink)}
+.cal-month{font-family:'Playfair Display',serif;font-size:14px;color:var(--ink);font-weight:500}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-lbl{font-size:9.5px;color:var(--ink3);text-align:center;padding:3px 0}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--ink2);cursor:pointer;border-radius:50%;transition:all .15s;position:relative}
+.cal-day:hover{background:rgba(0,0,0,.06)}
+.cal-day.today{background:var(--acc);color:#fff;font-weight:500}
+.cal-day.other{color:var(--bd2)}
+.ev-dot{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--acc2)}
+
+/* HABITS */
+.hlist{display:flex;flex-direction:column;gap:6px}
+.hrow{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);font-size:12.5px}
+.hn{flex:1;color:var(--ink2)}
+.hdays{display:flex;gap:3px}
+.hd{width:24px;height:24px;border-radius:50%;border:1px solid var(--bd);background:transparent;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--ink3);cursor:pointer;transition:all .15s}
+.hd.on{background:var(--acc3);border-color:var(--acc3);color:#fff}
+
+/* PROJECTS */
+.pblk{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:1rem;margin-bottom:8px}
+.phdr2{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pt{font-size:13px;font-weight:500;color:var(--ink);flex:1}
+.pp{font-family:'Playfair Display',serif;font-size:13px;color:var(--acc);font-weight:500}
+.pbar{height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.pfill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--acc2),var(--acc))}
+.mtask{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11.5px;color:var(--ink2)}
+.mtask.done{text-decoration:line-through;color:var(--ink3)}
+
+/* MEMO */
+.mcrd{background:var(--card2);border:1px solid var(--bd);border-left:3px solid var(--acc2);border-radius:0 var(--r) var(--r) 0;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s}
+.mcrd:hover{box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.mcrd.mb{border-left-color:var(--acc4)}
+.mt2{font-size:12.5px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.mb2{font-size:11.5px;color:var(--ink2);line-height:1.7}
+.mdate{font-size:10px;color:var(--ink3);margin-top:5px}
+
+/* DIARY */
+.dcrd{display:flex;gap:12px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px}
+.dmood{font-size:18px;flex-shrink:0;padding-top:1px}
+.ddate{font-size:10px;color:var(--ink3);margin-bottom:3px}
+.dtext{font-size:12px;color:var(--ink2);line-height:1.7}
+
+/* CARD GRID */
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:1rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.cc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.cc.c1::after{background:var(--acc)}.cc.c2::after{background:var(--acc3)}.cc.c3::after{background:var(--acc2)}.cc.c4::after{background:var(--acc4)}.cc.c5::after{background:#8b6496}
+.cc:hover{box-shadow:0 3px 14px rgba(0,0,0,.08);transform:translateY(-1px)}
+.cc-ic{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:9px}
+.cc-ic svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.cc.c1 .cc-ic{background:rgba(181,90,30,.1);color:var(--acc)}
+.cc.c2 .cc-ic{background:rgba(60,100,70,.1);color:var(--acc3)}
+.cc.c3 .cc-ic{background:rgba(120,90,40,.1);color:var(--acc2)}
+.cc.c4 .cc-ic{background:rgba(70,100,150,.1);color:var(--acc4)}
+.cc.c5 .cc-ic{background:rgba(139,100,150,.1);color:#8b6496}
+.cc-t{font-size:12.5px;font-weight:500;color:var(--ink);margin-bottom:3px}
+.cc-d{font-size:11px;color:var(--ink3);line-height:1.5}
+.cc-bg{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px;margin-top:8px}
+.cc.c1 .cc-bg{background:rgba(181,90,30,.1);color:var(--acc)}
+.cc.c2 .cc-bg{background:rgba(60,100,70,.1);color:var(--acc3)}
+.cc.c3 .cc-bg{background:rgba(120,90,40,.1);color:var(--acc2)}
+.cc.c4 .cc-bg{background:rgba(70,100,150,.1);color:var(--acc4)}
+.cc.c5 .cc-bg{background:rgba(139,100,150,.1);color:#8b6496}
+
+/* ===================== MOBILE ===================== */
+.mobile{display:none;flex-direction:column;height:100vh;background:var(--bg)}
+
+/* MOBILE HEADER */
+.m-hdr{padding:max(14px,env(safe-area-inset-top)) 18px 12px;display:flex;align-items:flex-end;justify-content:space-between;background:var(--bg);flex-shrink:0}
+.m-hdr-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;color:var(--ink)}
+.m-hdr-sub{font-size:10.5px;color:var(--ink3);margin-top:1px}
+.m-hdr-ava{width:30px;height:30px;border-radius:50%;background:var(--acc2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+
+/* MOBILE CONTENT */
+.m-content{flex:1;overflow-y:auto;padding:0 14px 90px}
+.m-content::-webkit-scrollbar{display:none}
+
+/* MOBILE SECTION */
+.m-sec-lbl{font-size:9.5px;font-weight:500;color:var(--ink3);letter-spacing:.8px;text-transform:uppercase;margin:14px 0 7px}
+
+/* MOBILE TASK CARD */
+.m-card{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-bottom:8px}
+.m-card-hdr{padding:11px 14px;border-bottom:1px solid #f5f0e8;display:flex;align-items:center;justify-content:space-between}
+.m-card-ttl{font-size:13px;font-weight:500;color:var(--ink)}
+.m-card-badge{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(181,90,30,.1);color:var(--acc)}
+.m-task-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f8f4ed}
+.m-task-row:last-child{border-bottom:none}
+.m-cb{width:18px;height:18px;border:1.5px solid var(--bd2);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.m-cb.done{background:var(--acc3);border-color:var(--acc3)}
+.m-cb.done svg{display:block}
+.m-cb svg{display:none;width:10px;height:10px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.m-tname{font-size:13px;color:var(--ink);flex:1}
+.m-tname.done{text-decoration:line-through;color:var(--ink3)}
+.m-ttag{font-size:9px;padding:1px 6px;border-radius:6px;display:block;margin-top:2px}
+.m-ttime{font-size:10px;color:var(--ink3);flex-shrink:0}
+
+/* MOBILE SCHEDULE */
+.m-sched-card{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+.m-sched-hdr{padding:11px 14px;border-bottom:1px solid #f5f0e8;display:flex;align-items:center;justify-content:space-between}
+.m-sched-ttl{font-size:13px;font-weight:500;color:var(--ink)}
+.m-stabs{display:flex;gap:4px}
+.m-stab{padding:3px 9px;border-radius:6px;font-size:10px;color:var(--ink3);cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif}
+.m-stab.active{background:rgba(181,90,30,.1);color:var(--acc);font-weight:500}
+.m-sday{padding:10px 14px;border-bottom:1px solid #f8f4ed}
+.m-sday:last-child{border-bottom:none}
+.m-sday-lbl{font-size:10px;color:var(--ink3);margin-bottom:6px;font-weight:500}
+.m-sitem{display:flex;align-items:center;gap:8px;padding:3px 0}
+.m-sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.m-stime{font-size:10px;color:var(--ink3);width:36px;flex-shrink:0}
+.m-sname{font-size:12px;color:var(--ink);flex:1}
+
+/* MOBILE CALENDAR */
+.m-cal-wrap{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px}
+.m-cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.m-cal-btn{width:30px;height:30px;border:1px solid var(--bd);border-radius:8px;background:var(--card2);color:var(--ink3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-family:'Noto Sans JP',sans-serif}
+.m-cal-month{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink)}
+.m-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.m-cal-lbl{font-size:9px;color:var(--ink3);text-align:center;padding:4px 0}
+.m-cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink2);cursor:pointer;border-radius:50%;position:relative;transition:all .15s}
+.m-cal-day:hover{background:rgba(0,0,0,.05)}
+.m-cal-day.today{background:var(--acc);color:#fff;font-weight:500}
+.m-cal-day.other{color:var(--bd2)}
+.m-ev-dot{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--acc4)}
+.m-cal-events{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.m-cev{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card2);border:1px solid var(--bd);border-radius:8px}
+.m-cev-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.m-cev-name{font-size:12px;color:var(--ink);flex:1}
+.m-cev-time{font-size:10px;color:var(--ink3)}
+
+/* MOBILE TASK PAGE */
+.m-filter{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
+.m-filter::-webkit-scrollbar{display:none}
+.m-flt-btn{padding:5px 12px;border:1px solid var(--bd);border-radius:20px;font-size:11px;color:var(--ink3);background:var(--card);cursor:pointer;white-space:nowrap;font-family:'Noto Sans JP',sans-serif;transition:all .15s}
+.m-flt-btn.active{border-color:var(--acc);color:var(--acc);background:rgba(181,90,30,.06)}
+.m-task-sec{font-size:9.5px;color:var(--ink3);margin:12px 0 6px;font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.m-task-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--card);border:1px solid var(--bd);border-radius:12px;margin-bottom:6px}
+.m-ti-chk{width:20px;height:20px;border:1.5px solid var(--bd2);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s}
+.m-ti-chk.done{background:var(--acc3);border-color:var(--acc3)}
+.m-ti-chk.done svg{display:block}
+.m-ti-chk svg{display:none;width:11px;height:11px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.m-ti-name{font-size:13px;color:var(--ink);margin-bottom:3px}
+.m-ti-name.done{text-decoration:line-through;color:var(--ink3)}
+.m-ti-meta{display:flex;gap:5px;flex-wrap:wrap}
+.m-pr-h{background:rgba(181,90,30,.1);color:var(--acc)}
+.m-pr-m{background:rgba(120,90,40,.1);color:var(--acc2)}
+.m-pr-l{background:rgba(60,100,70,.1);color:var(--acc3)}
+.m-add-btn{width:100%;padding:12px;background:var(--card);border:1.5px dashed var(--bd2);border-radius:12px;font-size:13px;color:var(--ink3);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s;margin-top:4px}
+.m-add-btn:hover{border-color:var(--acc);color:var(--acc)}
+
+/* AI FAB */
+.ai-fab{position:fixed;bottom:80px;right:18px;width:46px;height:46px;background:var(--acc);border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(181,90,30,.4);transition:all .2s;z-index:50}
+.ai-fab:hover{transform:scale(1.05)}
+.ai-fab svg{width:19px;height:19px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* AI SHEET (mobile) */
+.ai-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.12);z-index:100;transition:transform .3s cubic-bezier(.32,.72,0,1);transform:translateY(100%)}
+.ai-sheet.open{transform:translateY(0)}
+.ai-drag-bar{width:36px;height:4px;background:var(--bd);border-radius:2px;margin:10px auto 0}
+.ai-sheet-hdr{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.ai-sheet-ttl{font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:8px}
+.ai-sheet-ttl svg{width:14px;height:14px;stroke:var(--acc);stroke-width:2;fill:none;stroke-linecap:round}
+.ai-sheet-close{width:24px;height:24px;border:1px solid var(--bd);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--ink3)}
+.ai-sheet-msgs{height:200px;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ai-sheet-msgs::-webkit-scrollbar{display:none}
+.asm{max-width:82%}
+.asm.bot{align-self:flex-start}
+.asm.user{align-self:flex-end}
+.asm-bubble{padding:8px 12px;border-radius:12px;font-size:12px;line-height:1.6}
+.asm.bot .asm-bubble{background:var(--bg);border:1px solid var(--bd);border-radius:12px 12px 12px 2px;color:var(--ink2)}
+.asm.user .asm-bubble{background:var(--acc);color:#fff;border-radius:12px 12px 2px 12px}
+.ai-sheet-quick{padding:8px 16px;display:flex;gap:6px;overflow-x:auto;border-top:1px solid var(--bd)}
+.ai-sheet-quick::-webkit-scrollbar{display:none}
+.asq-btn{padding:5px 10px;background:var(--card2);border:1px solid var(--bd);border-radius:8px;font-size:10.5px;color:var(--ink2);cursor:pointer;white-space:nowrap;font-family:'Noto Sans JP',sans-serif;flex-shrink:0}
+.ai-sheet-inp{padding:10px 16px max(16px,env(safe-area-inset-bottom));display:flex;gap:8px}
+.ai-sheet-input{flex:1;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--ink);font-size:12px;font-family:'Noto Sans JP',sans-serif;outline:none}
+.ai-sheet-input:focus{border-color:var(--acc)}
+.ai-sheet-send{padding:9px 14px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+
+/* TAB BAR */
+.m-tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bd);display:none;padding:8px 0 max(16px,env(safe-area-inset-bottom));z-index:40}
+.m-tabs{display:flex}
+.m-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;transition:all .15s}
+.m-tab svg{width:22px;height:22px;stroke:var(--ink3);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.m-tab-lbl{font-size:9px;color:var(--ink3);transition:color .15s}
+.m-tab.active svg{stroke:var(--acc)}
+.m-tab.active .m-tab-lbl{color:var(--acc);font-weight:500}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1.5rem;width:100%;max-width:460px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.modal h2{font-size:15px;font-weight:500;margin-bottom:6px;color:var(--ink)}
+.modal p{font-size:12px;color:var(--ink2);margin-bottom:1rem;line-height:1.6}
+.modal input{width:100%;padding:9px 12px;background:var(--card2);border:1px solid var(--bd);border-radius:8px;color:var(--ink);font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:8px}
+.modal input:focus{border-color:var(--acc)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+.modal-btn{padding:8px 16px;border:1px solid var(--bd);border-radius:8px;font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;color:var(--ink2);background:transparent;transition:all .15s}
+.modal-btn:hover{border-color:var(--acc);color:var(--acc)}
+.modal-btn.primary{border-color:var(--acc);color:var(--acc)}
+.modal-btn.primary:hover{background:var(--acc);color:#fff}
+
+/* HAMBURGER (desktop hidden on mobile) */
+.hbg{display:none;position:fixed;top:14px;left:14px;z-index:200;background:var(--sb);border:1px solid var(--bd);border-radius:6px;padding:9px;cursor:pointer;flex-direction:column;gap:4px}
+.hbg span{display:block;width:16px;height:1.5px;background:var(--ink2);border-radius:2px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .desktop{display:none}
+  .mobile{display:flex}
+  .ai-fab{display:flex}
+  .m-tabbar{display:block}
+}
+@media(min-width:769px){
+  .desktop{display:flex}
+  .mobile{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- SUPABASE MODAL -->
+<div class="modal-bg" id="sb-modal">
+  <div class="modal">
+    <h2>Supabase 接続設定</h2>
+    <p>スマホ・PCでデータを同期するには設定が必要です。</p>
+    <input type="text" id="sb-url" placeholder="Project URL (https://xxx.supabase.co)">
+    <input type="text" id="sb-key" placeholder="Publishable key (sb_publishable_...)">
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal('sb-modal')">スキップ</button>
+      <button class="modal-btn primary" onclick="saveDb()">接続する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DESKTOP ==================== -->
+<div class="desktop">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-logo-title">翔の手帳</div>
+      <div class="sb-logo-sub">Personal Workspace</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="ni active" onclick="goPage('home',this)">
+        <svg class="ni-ic" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="ni-lbl">ホーム</span>
+      </div>
+      <div class="ni" onclick="goPage('schedule',this)">
+        <svg class="ni-ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+        <span class="ni-lbl">カレンダー</span>
+      </div>
+      <div class="ni" onclick="goPage('tasks',this)">
+        <svg class="ni-ic" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <span class="ni-lbl">タスク</span><span class="ni-badge" id="task-badge-d">3</span>
+      </div>
+      <div class="ni" onclick="tAcc('proj-acc','proj-arr')">
+        <svg class="ni-ic" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        <span class="ni-lbl">プロジェクト</span>
+        <span class="ni-arr" id="proj-arr">›</span>
+      </div>
+      <div class="nacc" id="proj-acc">
+        <div class="nch" onclick="goPage('proj-detail',null)"><div class="nch-dot"></div>Java研修カリキュラム</div>
+        <div class="nch done"><div class="nch-dot"></div>社内勉強会準備</div>
+        <div class="nch" onclick="goPage('proj-detail',null)"><div class="nch-dot"></div>ダッシュボード開発</div>
+      </div>
+      <div class="ni" onclick="goPage('habits',this)">
+        <svg class="ni-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="ni-lbl">習慣</span>
+      </div>
+      <div class="ni" onclick="goPage('diary',this)">
+        <svg class="ni-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="ni-lbl">日記</span>
+      </div>
+      <div class="ni" onclick="goPage('memo',this)">
+        <svg class="ni-ic" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span class="ni-lbl">メモ</span>
+      </div>
+      <div class="sb-sec">設定</div>
+      <div class="ni" onclick="openModal('sb-modal')">
+        <svg class="ni-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="ni-lbl">設定・DB接続</span>
+      </div>
+    </nav>
+    <div class="sb-bot">
+      <div class="sb-user">
+        <div class="sb-ava">S</div>
+        <div class="sb-uname">鈴木 翔</div>
+      </div>
+      <div class="db-pill"><div class="db-dot" id="db-dot-d"></div><span id="db-lbl-d">local</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN PAGES -->
+  <div class="main-area">
+
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="page-title">鈴木翔のホーム</div>
+      <div class="page-sub" id="d-date"></div>
+      <div class="blk">
+        <div class="sec-hdr"><div class="sec-ttl">本日の予定</div><div class="sec-line"></div><span class="sec-lnk">+ 追加</span></div>
+        <div class="tbl-wrap" id="d-schedule"></div>
+      </div>
+      <div class="div"></div>
+      <div class="blk">
+        <div class="sec-hdr"><div class="sec-ttl">カレンダー</div><div class="sec-line"></div></div>
+        <div class="cal-wrap" id="d-cal"></div>
+      </div>
+      <div class="div"></div>
+      <div class="blk">
+        <div class="sec-hdr"><div class="sec-ttl">今日のタスク</div><div class="sec-line"></div><span class="sec-lnk" onclick="goPage('tasks',null)">すべて見る →</span></div>
+        <div class="tbl-wrap" id="d-tasks-home"></div>
+      </div>
+      <div class="div"></div>
+      <div class="mrow" id="d-metrics"></div>
+      <div class="div"></div>
+      <div class="blk">
+        <div class="sec-hdr"><div class="sec-ttl">セクション</div><div class="sec-line"></div></div>
+        <div class="cgrid">
+          <div class="cc c1" onclick="goPage('tasks',null)"><div class="cc-ic"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div class="cc-t">タスク管理</div><div class="cc-d">今日のやること</div><div class="cc-bg">5 件</div></div>
+          <div class="cc c2" onclick="goPage('habits',null)"><div class="cc-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="cc-t">習慣トラッカー</div><div class="cc-d">毎日の習慣</div><div class="cc-bg">3 習慣</div></div>
+          <div class="cc c3" onclick="goPage('memo',null)"><div class="cc-ic"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="cc-t">メモ</div><div class="cc-d">アイデア整理</div><div class="cc-bg">8 件</div></div>
+          <div class="cc c4" onclick="goPage('diary',null)"><div class="cc-ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg></div><div class="cc-t">日記</div><div class="cc-d">振り返りログ</div><div class="cc-bg">12 件</div></div>
+          <div class="cc c5" onclick="goPage('proj-detail',null)"><div class="cc-ic"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></div><div class="cc-t">プロジェクト</div><div class="cc-d">ミニタスクで管理</div><div class="cc-bg">3 件</div></div>
+          <div class="cc c1" style="border-style:dashed"><div class="cc-ic"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="cc-t">研修管理</div><div class="cc-d">Javaカリキュラム</div><div class="cc-bg">Phase 2</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div id="page-schedule" class="page">
+      <div class="page-title">カレンダー</div>
+      <div class="page-sub">予定・スケジュール管理</div>
+      <div class="blk"><div class="cal-wrap" id="d-cal-full"></div></div>
+      <div class="div"></div>
+      <div class="blk">
+        <div class="sec-hdr"><div class="sec-ttl">本日の予定</div><div class="sec-line"></div><span class="sec-lnk">+ 追加</span></div>
+        <div class="tbl-wrap" id="d-schedule-full"></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="page-tasks" class="page">
+      <div class="page-title">タスク管理</div>
+      <div class="page-sub">やること一覧</div>
+      <div id="d-tasks-full"></div>
+    </div>
+
+    <!-- HABITS -->
+    <div id="page-habits" class="page">
+      <div class="page-title">習慣トラッカー</div>
+      <div class="page-sub">今週の習慣を記録</div>
+      <div class="hlist" id="d-habits"></div>
+      <div style="margin-top:10px">
+        <div class="tbl-add" style="border:1px solid var(--bd);border-radius:var(--r);cursor:pointer" onclick="">+ 習慣を追加</div>
+      </div>
+    </div>
+
+    <!-- DIARY -->
+    <div id="page-diary" class="page">
+      <div class="page-title">日記・振り返り</div>
+      <div class="page-sub">毎日の感情ログ</div>
+      <div id="d-diary"></div>
+    </div>
+
+    <!-- MEMO -->
+    <div id="page-memo" class="page">
+      <div class="page-title">メモ・アイデア</div>
+      <div class="page-sub">気づきを記録</div>
+      <div id="d-memo"></div>
+    </div>
+
+    <!-- PROJECT DETAIL -->
+    <div id="page-proj-detail" class="page">
+      <div class="page-title">プロジェクト管理</div>
+      <div class="page-sub">ミニタスクで進捗を管理</div>
+      <div id="d-projects"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT AI PANEL -->
+  <aside class="ai-panel-desktop">
+    <div class="ai-ph">
+      <div class="ai-ph-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+      <div>
+        <div class="ai-ph-title">AIアシスタント</div>
+        <div class="ai-ph-sub">何でも相談してください</div>
+      </div>
+    </div>
+    <div class="ai-msgs-wrap" id="d-ai-msgs">
+      <div class="ai-msg bot"><div class="ai-bubble">こんにちは！タスクの追加・機能追加・スケジュール整理など、何でも相談してください。</div><div class="ai-time">いつでも</div></div>
+    </div>
+    <div class="ai-quick-wrap">
+      <div class="ai-qlbl">クイック操作</div>
+      <button class="aq-btn" onclick="sendQuick('今日のタスクを整理して')">今日のタスクを整理して</button>
+      <button class="aq-btn" onclick="sendQuick('今週の進捗をまとめて')">今週の進捗をまとめて</button>
+      <button class="aq-btn" onclick="sendQuick('新しいタスクを追加して')">新しいタスクを追加して</button>
+    </div>
+    <div class="ai-inp-wrap">
+      <textarea class="ai-inp" id="d-ai-inp" placeholder="メッセージを入力..." rows="2" onkeydown="aiKey(event,'d')"></textarea>
+      <button class="ai-send-btn" onclick="sendAI('d')">送信</button>
+    </div>
+  </aside>
+
+</div>
+
+<!-- ==================== MOBILE ==================== -->
+<div class="mobile">
+
+  <!-- HOME -->
+  <div id="m-page-home" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="m-hdr">
+      <div>
+        <div class="m-hdr-title">翔の日程管理</div>
+        <div class="m-hdr-sub" id="m-date"></div>
+      </div>
+      <div class="m-hdr-ava">S</div>
+    </div>
+    <div class="m-content" id="m-content-home">
+      <div class="m-sec-lbl">本日の予定タスク</div>
+      <div class="m-card" id="m-tasks-card"></div>
+      <div class="m-sec-lbl">3日間の予定</div>
+      <div class="m-sched-card">
+        <div class="m-sched-hdr">
+          <span class="m-sched-ttl">スケジュール</span>
+          <div class="m-stabs">
+            <div class="m-stab active" onclick="mTab(this,0)">今日</div>
+            <div class="m-stab" onclick="mTab(this,1)">明日</div>
+            <div class="m-stab" onclick="mTab(this,2)">明後日</div>
+          </div>
+        </div>
+        <div id="m-sched-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="m-page-cal" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div class="m-hdr">
+      <div>
+        <div class="m-hdr-title">カレンダー</div>
+        <div class="m-hdr-sub">2026年4月</div>
+      </div>
+      <div class="m-hdr-ava">S</div>
+    </div>
+    <div class="m-content">
+      <div class="m-cal-wrap" id="m-cal"></div>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div id="m-page-task" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div class="m-hdr">
+      <div>
+        <div class="m-hdr-title">タスク管理</div>
+        <div class="m-hdr-sub" id="m-task-date"></div>
+      </div>
+      <div class="m-hdr-ava">S</div>
+    </div>
+    <div class="m-content" id="m-task-content"></div>
+  </div>
+
+</div>
+
+<!-- AI FAB (mobile) -->
+<div class="ai-fab" onclick="toggleAISheet()">
+  <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+</div>
+
+<!-- AI SHEET (mobile) -->
+<div class="ai-sheet" id="ai-sheet">
+  <div class="ai-drag-bar"></div>
+  <div class="ai-sheet-hdr">
+    <div class="ai-sheet-ttl">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      AIアシスタント
+    </div>
+    <div class="ai-sheet-close" onclick="toggleAISheet()">✕</div>
+  </div>
+  <div class="ai-sheet-msgs" id="m-ai-msgs">
+    <div class="asm bot"><div class="asm-bubble">こんにちは！タスクの追加や相談など、何でも聞いてください。</div></div>
+  </div>
+  <div class="ai-sheet-quick">
+    <button class="asq-btn" onclick="sendQuick('今日のタスクを整理して')">タスクを整理</button>
+    <button class="asq-btn" onclick="sendQuick('今週の進捗は？')">進捗確認</button>
+    <button class="asq-btn" onclick="sendQuick('予定を追加して')">予定追加</button>
+  </div>
+  <div class="ai-sheet-inp">
+    <input class="ai-sheet-input" id="m-ai-inp" placeholder="メッセージを入力..." onkeydown="if(event.key==='Enter')sendAI('m')">
+    <button class="ai-sheet-send" onclick="sendAI('m')">送信</button>
+  </div>
+</div>
+
+<!-- TAB BAR (mobile) -->
+<div class="m-tabbar">
+  <div class="m-tabs">
+    <div class="m-tab active" id="m-tab-home" onclick="mSwitch('home')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="m-tab-lbl">ホーム</span>
+    </div>
+    <div class="m-tab" id="m-tab-cal" onclick="mSwitch('cal')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="m-tab-lbl">カレンダー</span>
+    </div>
+    <div class="m-tab" id="m-tab-task" onclick="mSwitch('task')">
+      <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span class="m-tab-lbl">タスク</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const LSKEY = 'sho_v4';
+let S = {
+  tasks: [
+    {id:1,text:'朝会の準備',done:true,badge:'work',priority:'mid'},
+    {id:2,text:'Java研修資料確認',done:false,badge:'study',priority:'high'},
+    {id:3,text:'英単語10個',done:true,badge:'habit',priority:'low'},
+    {id:4,text:'Phase2資料作成',done:false,badge:'study',priority:'high'},
+    {id:5,text:'Google Ads最適化',done:false,badge:'work',priority:'mid'}
+  ],
+  schedule: [
+    {id:1,time:'09:00',name:'朝会',memo:'チームMTG',day:0,color:'#466496'},
+    {id:2,time:'11:00',name:'Java研修 打ち合わせ',memo:'資料確認',day:0,color:'#b45a1e'},
+    {id:3,time:'14:00',name:'Google Ads レポート',memo:'-',day:0,color:'#3c6446'},
+    {id:4,time:'10:00',name:'自己学習',memo:'-',day:1,color:'#466496'},
+    {id:5,time:'09:00',name:'週次MTG',memo:'-',day:2,color:'#b45a1e'},
+    {id:6,time:'13:00',name:'Phase2 資料提出',memo:'-',day:2,color:'#3c6446'}
+  ],
+  habits: [
+    {id:1,name:'朝の読書',days:[1,1,1,0,0,0,0]},
+    {id:2,name:'英語学習',days:[1,0,1,0,0,0,0]},
+    {id:3,name:'運動',days:[0,0,1,0,0,0,0]}
+  ],
+  projects: [
+    {id:1,name:'Java新人研修カリキュラム',tasks:[{t:'Phase1 Java基礎テキスト作成',d:true},{t:'Phase2 Web/DB資料作成',d:false},{t:'Phase3 Spring Boot実装',d:false}]},
+    {id:2,name:'ダッシュボード開発',tasks:[{t:'GitHub Pages公開',d:true},{t:'Supabase連携',d:true},{t:'手帳デザインに変更',d:false}]}
+  ],
+  memos: [
+    {id:1,title:'ダッシュボードアイデア',body:'手帳風デザインで温かみを出す。Notion配置がベスト。',date:'2026/04/25',type:'y'},
+    {id:2,title:'API rate limit 対策',body:'大量PDFは非同期処理でキューイングする方針で進める。',date:'2026/04/23',type:'b'}
+  ],
+  diaries: [
+    {id:1,date:'2026/04/25 09:00',mood:'🔥',text:'手帳風ダッシュボードのデザイン検討中。Notion風レイアウトがいい感じ。'},
+    {id:2,date:'2026/04/24 22:00',mood:'😊',text:'GitHub Pages公開完了！Supabase連携でスマホからもアクセスできた。'}
+  ],
+  weekmemo: ''
+};
+let sbClient = null;
+let aiHist = [];
+let curMTab = 0;
+
+// ===== SUPABASE =====
+function initSb(url,key){
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  s.onload=()=>{try{sbClient=supabase.createClient(url,key);dbSt(true);syncFrom();}catch(e){dbSt(false,'err');}};
+  s.onerror=()=>dbSt(false,'err');
+  document.head.appendChild(s);
+}
+function dbSt(ok,t){
+  ['d','m'].forEach(p=>{
+    const dot=document.getElementById('db-dot-'+p),lbl=document.getElementById('db-lbl-'+p);
+    if(!dot)return;
+    if(ok){dot.className='db-dot on';lbl.textContent='synced';}
+    else if(t==='err'){dot.className='db-dot';lbl.textContent='error';}
+    else{dot.className='db-dot';lbl.textContent='local';}
+  });
+}
+async function syncTo(){if(!sbClient)return;try{await sbClient.from('dashboard').upsert({id:'main',data:JSON.stringify(S)});dbSt(true);}catch(e){dbSt(false,'err');}}
+async function syncFrom(){if(!sbClient)return;try{const{data}=await sbClient.from('dashboard').select('data').eq('id','main').single();if(data?.data){S={...S,...JSON.parse(data.data)};render();}}catch(e){}}
+function save(){localStorage.setItem(LSKEY,JSON.stringify(S));syncTo();}
+function load(){try{const d=localStorage.getItem(LSKEY);if(d)S={...S,...JSON.parse(d)};}catch(e){}}
+function saveDb(){
+  const url=document.getElementById('sb-url').value.trim(),key=document.getElementById('sb-key').value.trim();
+  if(!url||!key)return alert('URLとAPIキーを入力してください');
+  localStorage.setItem('sho_sb_url',url);localStorage.setItem('sho_sb_key',key);
+  initSb(url,key);closeModal('sb-modal');
+}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ===== DESKTOP NAV =====
+function goPage(name, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  render();
+}
+function tAcc(id,ar){document.getElementById(id).classList.toggle('open');document.getElementById(ar).classList.toggle('open');}
+
+// ===== MOBILE NAV =====
+function mSwitch(name){
+  ['home','cal','task'].forEach(t=>{
+    const pg=document.getElementById('m-page-'+t);
+    pg.style.display='none';
+    document.getElementById('m-tab-'+t).classList.remove('active');
+  });
+  document.getElementById('m-page-'+name).style.display='flex';
+  document.getElementById('m-page-'+name).style.flexDirection='column';
+  document.getElementById('m-tab-'+name).classList.add('active');
+  render();
+}
+function mTab(el,idx){
+  document.querySelectorAll('.m-stab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  curMTab=idx;
+  renderMSched();
+}
+function toggleAISheet(){document.getElementById('ai-sheet').classList.toggle('open');}
+
+// ===== AI =====
+function aiKey(e,p){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI(p);}}
+function addAIMsg(p,role,text){
+  const wrap=document.getElementById(p==='d'?'d-ai-msgs':'m-ai-msgs');
+  const cls=p==='d'?'ai-msg':'asm';
+  const bcls=p==='d'?'ai-bubble':'asm-bubble';
+  const d=document.createElement('div');
+  d.className=`${cls} ${role}`;
+  d.innerHTML=`<div class="${bcls}">${text}</div>`;
+  wrap.appendChild(d);wrap.scrollTop=wrap.scrollHeight;
+}
+function addTyping(p){
+  const wrap=document.getElementById(p==='d'?'d-ai-msgs':'m-ai-msgs');
+  const cls=p==='d'?'ai-msg':'asm';
+  const d=document.createElement('div');
+  d.className=`${cls} bot`;d.id=`typing-${p}`;
+  d.innerHTML=`<div style="padding:9px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:10px 10px 10px 2px;display:flex;gap:4px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:var(--ink3);display:inline-block;animation:td 1.2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--ink3);display:inline-block;animation:td 1.2s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--ink3);display:inline-block;animation:td 1.2s .4s infinite"></span></div>`;
+  wrap.appendChild(d);wrap.scrollTop=wrap.scrollHeight;
+}
+function rmTyping(p){const el=document.getElementById(`typing-${p}`);if(el)el.remove();}
+
+async function sendAI(p){
+  const inp=document.getElementById(p==='d'?'d-ai-inp':'m-ai-inp');
+  const text=inp.value.trim();if(!text)return;
+  inp.value='';addAIMsg(p,'user',text);
+  aiHist.push({role:'user',content:text});
+  addTyping(p);
+  const sys=`あなたは鈴木翔さん専用ダッシュボードのAIアシスタントです。タスク管理・スケジュール整理・習慣アドバイスなど、鈴木さんの日々の業務をサポートしてください。現在のタスク: ${S.tasks.map(t=>t.text+(t.done?'(完了)':'')).join('、')}。簡潔に日本語で答えてください。`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system:sys,messages:aiHist})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'エラーが発生しました。';
+    rmTyping(p);aiHist.push({role:'assistant',content:reply});
+    addAIMsg(p,'bot',reply);
+  }catch(e){rmTyping(p);addAIMsg(p,'bot','エラーが発生しました。');}
+}
+function sendQuick(text){
+  const inp=document.getElementById('d-ai-inp');
+  inp.value=text;sendAI('d');
+}
+
+// ===== RENDER =====
+function render(){
+  const d=new Date();
+  const days=['日','月','火','水','木','金','土'];
+  const dateStr=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+  const el=document.getElementById('d-date');if(el)el.textContent=dateStr;
+  const mel=document.getElementById('m-date');if(mel)mel.textContent=dateStr;
+  const mtel=document.getElementById('m-task-date');if(mtel)mtel.textContent=dateStr;
+
+  renderDSchedule();renderDCal();renderDTasksHome();renderDMetrics();
+  renderDTasksFull();renderDHabits();renderDProjects();renderDDiary();renderDMemo();
+  renderMTasksCard();renderMSched();renderMCal();renderMTaskFull();
+}
+
+function tagHTML(b){
+  const m={'work':['仕事','tw'],'study':['研修','ts'],'habit':['習慣','th']};
+  const [l,c]=m[b]||['',''];
+  return `<span class="tag ${c}">${l}</span>`;
+}
+function mTagHTML(b){
+  const m={'work':['仕事','tw'],'study':['研修','ts'],'habit':['習慣','th']};
+  const [l,c]=m[b]||['',''];
+  return `<span class="m-ttag ${c}">${l}</span>`;
+}
+function prHTML(p){
+  const m={'high':'高・急','mid':'中','low':'低'};
+  return `<span class="tag" style="background:rgba(0,0,0,.05);color:var(--ink3)">${m[p]||''}</span>`;
+}
+
+function renderDSchedule(){
+  const el=document.getElementById('d-schedule');if(!el)return;
+  const today=S.schedule.filter(s=>s.day===0);
+  el.innerHTML=`<table><thead><tr><th style="width:70px">時間</th><th>予定</th><th>メモ</th></tr></thead><tbody>
+    ${today.map(s=>`<tr><td style="color:var(--ink3);font-size:11px">${s.time}</td><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px"></span>${s.name}</td><td style="color:var(--ink3);font-size:11px">${s.memo}</td></tr>`).join('')}
+  </tbody></table><div class="tbl-add">+ 予定を追加</div>`;
+  const el2=document.getElementById('d-schedule-full');if(el2)el2.innerHTML=el.innerHTML;
+}
+
+function calHTML(elId){
+  const d=new Date();
+  const year=d.getFullYear(),month=d.getMonth();
+  const first=new Date(year,month,1).getDay();
+  const last=new Date(year,month+1,0).getDate();
+  const prevLast=new Date(year,month,0).getDate();
+  let cells='';
+  ['日','月','火','水','木','金','土'].forEach((l,i)=>{
+    cells+=`<div class="cal-lbl" ${i===0?'style="color:var(--acc)"':i===6?'style="color:var(--acc4)"':''}>${l}</div>`;
+  });
+  for(let i=0;i<first;i++) cells+=`<div class="cal-day other">${prevLast-first+i+1}</div>`;
+  for(let i=1;i<=last;i++){
+    const isToday=i===d.getDate();
+    const hasEv=S.schedule.some(s=>s.day===0)&&(i===2||i===8||i===16||i===25);
+    cells+=`<div class="cal-day${isToday?' today':''}">${i}${hasEv?'<div class="ev-dot"></div>':''}</div>`;
+  }
+  const total=first+last;const remaining=(7-total%7)%7;
+  for(let i=1;i<=remaining;i++) cells+=`<div class="cal-day other">${i}</div>`;
+  const el=document.getElementById(elId);if(!el)return;
+  el.innerHTML=`<div class="cal-nav"><button class="cal-btn">‹</button><span class="cal-month">${year}年 ${month+1}月</span><button class="cal-btn">›</button></div><div class="cal-grid">${cells}</div>`;
+}
+
+function renderDCal(){calHTML('d-cal');calHTML('d-cal-full');}
+
+function renderDTasksHome(){
+  const el=document.getElementById('d-tasks-home');if(!el)return;
+  const tasks=S.tasks.slice(0,5);
+  el.innerHTML=`<table><thead><tr><th style="width:24px"></th><th>タスク</th><th>カテゴリ</th><th>優先度</th></tr></thead><tbody>
+    ${tasks.map(t=>`<tr><td><div class="cb ${t.done?'done':''}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></td>
+    <td ${t.done?'style="text-decoration:line-through;color:var(--ink3)"':''}>${t.text}</td>
+    <td>${tagHTML(t.badge)}</td><td>${prHTML(t.priority)}</td></tr>`).join('')}
+  </tbody></table><div class="tbl-add">+ タスクを追加</div>`;
+}
+
+function renderDMetrics(){
+  const el=document.getElementById('d-metrics');if(!el)return;
+  const done=S.tasks.filter(t=>t.done).length;
+  const habDone=S.habits.filter(h=>h.days[new Date().getDay()]===1).length;
+  const projAvg=Math.round(S.projects.map(p=>p.tasks.filter(t=>t.d).length/p.tasks.length*100).reduce((a,b)=>a+b,0)/S.projects.length);
+  el.innerHTML=`
+    <div class="met"><div class="mv" style="color:var(--acc)">${done}/${S.tasks.length}</div><div class="ml">タスク完了</div></div>
+    <div class="met"><div class="mv" style="color:var(--acc3)">${habDone}/${S.habits.length}</div><div class="ml">今日の習慣</div></div>
+    <div class="met"><div class="mv" style="color:var(--acc2)">${projAvg}%</div><div class="ml">PJ平均進捗</div></div>
+    <div class="met"><div class="mv" style="color:var(--acc4)">${S.memos.length}</div><div class="ml">メモ件数</div></div>`;
+}
+
+function renderDTasksFull(){
+  const el=document.getElementById('d-tasks-full');if(!el)return;
+  const undone=S.tasks.filter(t=>!t.done);
+  const done=S.tasks.filter(t=>t.done);
+  el.innerHTML=`
+    <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">未完了 · ${undone.length}件</div>
+    ${undone.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px">
+      <div class="cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div style="flex:1"><div style="font-size:13px;color:var(--ink)">${t.text}</div><div style="margin-top:3px;display:flex;gap:5px">${tagHTML(t.badge)}${prHTML(t.priority)}</div></div>
+    </div>`).join('')}
+    <div class="tbl-add" style="border:1.5px dashed var(--bd2);border-radius:var(--r);margin-bottom:1rem">+ タスクを追加</div>
+    <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">完了済み · ${done.length}件</div>
+    ${done.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px;opacity:.6">
+      <div class="cb done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div style="font-size:13px;color:var(--ink3);text-decoration:line-through">${t.text}</div>
+    </div>`).join('')}`;
+}
+
+function renderDHabits(){
+  const el=document.getElementById('d-habits');if(!el)return;
+  const days=['日','月','火','水','木','金','土'];
+  el.innerHTML=S.habits.map(h=>`
+    <div class="hrow"><span class="hn">${h.name}</span>
+    <div class="hdays">${days.map((d,i)=>`<div class="hd ${h.days[i]?'on':''}">${d}</div>`).join('')}</div></div>`).join('');
+}
+
+function renderDProjects(){
+  const el=document.getElementById('d-projects');if(!el)return;
+  el.innerHTML=S.projects.map(p=>{
+    const pct=Math.round(p.tasks.filter(t=>t.d).length/p.tasks.length*100);
+    return `<div class="pblk">
+      <div class="phdr2"><span class="pt">${p.name}</span><span class="pp">${pct}%</span></div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+      ${p.tasks.map(t=>`<div class="mtask ${t.d?'done':''}"><div class="cb ${t.d?'done':''}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>${t.t}</div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderDDiary(){
+  const el=document.getElementById('d-diary');if(!el)return;
+  el.innerHTML=S.diaries.map(d=>`
+    <div class="dcrd"><div class="dmood">${d.mood}</div>
+    <div><div class="ddate">${d.date}</div><div class="dtext">${d.text}</div></div></div>`).join('');
+}
+
+function renderDMemo(){
+  const el=document.getElementById('d-memo');if(!el)return;
+  el.innerHTML=S.memos.map(m=>`
+    <div class="mcrd ${m.type==='b'?'mb':''}">
+      <div class="mt2">${m.title}</div><div class="mb2">${m.body}</div><div class="mdate">${m.date}</div>
+    </div>`).join('');
+}
+
+// MOBILE RENDERS
+function renderMTasksCard(){
+  const el=document.getElementById('m-tasks-card');if(!el)return;
+  const undone=S.tasks.filter(t=>!t.done).length;
+  el.innerHTML=`<div class="m-card-hdr"><span class="m-card-ttl">今日のタスク</span><span class="m-card-badge">${S.tasks.length}件</span></div>
+    ${S.tasks.map(t=>`<div class="m-task-row">
+      <div class="m-cb ${t.done?'done':''}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div style="flex:1"><div class="m-tname ${t.done?'done':''}">${t.text}</div>${mTagHTML(t.badge)}</div>
+    </div>`).join('')}`;
+}
+
+function renderMSched(){
+  const el=document.getElementById('m-sched-content');if(!el)return;
+  const d=new Date();
+  const days=[0,1,2].map(i=>{
+    const date=new Date(d);date.setDate(d.getDate()+i);
+    return {label:`${date.getMonth()+1}月${date.getDate()}日（${'日月火水木金土'[date.getDay()]}）`,items:S.schedule.filter(s=>s.day===i)};
+  });
+  const day=days[curMTab];
+  el.innerHTML=`<div class="m-sday">
+    <div class="m-sday-lbl">${day.label}</div>
+    ${day.items.map(s=>`<div class="m-sitem"><div class="m-sdot" style="background:${s.color}"></div><div class="m-stime">${s.time}</div><div class="m-sname">${s.name}</div></div>`).join('')}
+    ${day.items.length===0?'<div style="font-size:12px;color:var(--ink3);padding:4px 0">予定なし</div>':''}
+  </div>`;
+}
+
+function renderMCal(){
+  const el=document.getElementById('m-cal');if(!el)return;
+  const d=new Date();
+  const year=d.getFullYear(),month=d.getMonth();
+  const first=new Date(year,month,1).getDay();
+  const last=new Date(year,month+1,0).getDate();
+  const prevLast=new Date(year,month,0).getDate();
+  let cells='';
+  ['日','月','火','水','木','金','土'].forEach((l,i)=>{
+    cells+=`<div class="m-cal-lbl" ${i===0?'style="color:var(--acc)"':i===6?'style="color:var(--acc4)"':''}>${l}</div>`;
+  });
+  for(let i=0;i<first;i++) cells+=`<div class="m-cal-day other">${prevLast-first+i+1}</div>`;
+  for(let i=1;i<=last;i++){
+    const isToday=i===d.getDate();
+    const hasEv=i===2||i===8||i===16||i===25;
+    cells+=`<div class="m-cal-day${isToday?' today':''}">${i}${hasEv?'<div class="m-ev-dot"></div>':''}</div>`;
+  }
+  const total=first+last;const remaining=(7-total%7)%7;
+  for(let i=1;i<=remaining;i++) cells+=`<div class="m-cal-day other">${i}</div>`;
+  const todayEvs=S.schedule.filter(s=>s.day===0);
+  el.innerHTML=`
+    <div class="m-cal-nav"><button class="m-cal-btn">‹</button><span class="m-cal-month">${year}年 ${month+1}月</span><button class="m-cal-btn">›</button></div>
+    <div class="m-cal-grid">${cells}</div>
+    <div class="m-cal-events">
+      <div style="font-size:10.5px;font-weight:500;color:var(--ink);margin:10px 0 6px">${d.getDate()}日の予定</div>
+      ${todayEvs.map(s=>`<div class="m-cev"><div class="m-cev-dot" style="background:${s.color}"></div><div class="m-cev-name">${s.name}</div><div class="m-cev-time">${s.time}</div></div>`).join('')}
+    </div>`;
+}
+
+function renderMTaskFull(){
+  const el=document.getElementById('m-task-content');if(!el)return;
+  const undone=S.tasks.filter(t=>!t.done);
+  const done=S.tasks.filter(t=>t.done);
+  el.innerHTML=`
+    <div class="m-filter">
+      <button class="m-flt-btn active">すべて</button>
+      <button class="m-flt-btn">仕事</button>
+      <button class="m-flt-btn">研修</button>
+      <button class="m-flt-btn">習慣</button>
+    </div>
+    <div class="m-task-sec">未完了 · ${undone.length}件</div>
+    ${undone.map(t=>`<div class="m-task-item">
+      <div class="m-ti-chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div><div class="m-ti-name">${t.text}</div>
+      <div class="m-ti-meta">${mTagHTML(t.badge)}<span class="tag m-pr-${t.priority}" style="font-size:9px;padding:1px 6px;border-radius:6px">${t.priority==='high'?'高':t.priority==='mid'?'中':'低'}</span></div></div>
+    </div>`).join('')}
+    <button class="m-add-btn">＋ タスクを追加</button>
+    <div class="m-task-sec" style="margin-top:16px">完了済み · ${done.length}件</div>
+    ${done.map(t=>`<div class="m-task-item" style="opacity:.6">
+      <div class="m-ti-chk done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="m-ti-name done">${t.text}</div>
+    </div>`).join('')}`;
+}
+
+// ===== INIT =====
+// typing animation
+const style=document.createElement('style');
+style.textContent='@keyframes td{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}';
+document.head.appendChild(style);
+
+function init(){
+  load();
+  const sbUrl=localStorage.getItem('sho_sb_url'),sbKey=localStorage.getItem('sho_sb_key');
+  if(sbUrl&&sbKey){document.getElementById('sb-url').value=sbUrl;document.getElementById('sb-key').value=sbKey;initSb(sbUrl,sbKey);}
+  // mobile init
+  document.getElementById('m-page-home').style.display='flex';
+  document.getElementById('m-page-home').style.flexDirection='column';
+  render();
+  // SW
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered')).catch(()=>{});
+  }
+}
+init();
+</script>
+</body>
+</html>
