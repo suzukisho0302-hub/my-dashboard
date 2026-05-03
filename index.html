@@ -459,13 +459,13 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
   </div>
 </div>
 
-<!-- ANTHROPIC API KEY MODAL -->
+<!-- GEMINI API KEY MODAL -->
 <div class="modal-bg" id="ai-modal">
   <div class="modal">
-    <h2>Claude API キー設定</h2>
-    <p>AIチャットを使うには Anthropic の API キーが必要です。<br>キーは端末のローカルストレージにのみ保存されます。</p>
-    <input type="password" id="ai-key-inp" placeholder="sk-ant-api03-...">
-    <div class="modal-note">⚠ 個人利用のみ想定。ブラウザから直接呼び出すため、キーが端末内に残ります。共有端末では使わないでください。</div>
+    <h2>Gemini API キー設定</h2>
+    <p>AIチャットには Google Gemini API（無料枠あり）を使用します。<br>キーは端末のローカルストレージにのみ保存されます。</p>
+    <input type="password" id="ai-key-inp" placeholder="AIza...">
+    <div class="modal-note">無料枠: Gemini 2.0 Flash で 15req/分・1500req/日。<br>キーの取得: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--acc)">Google AI Studio</a><br>⚠ 共有端末では使わないでください（localStorage に平文で残ります）。</div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeModal('ai-modal')">キャンセル</button>
       <button class="modal-btn" onclick="clearAIKey()">キー削除</button>
