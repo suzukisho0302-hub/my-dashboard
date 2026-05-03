@@ -471,28 +471,50 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
   </div>
 </div>
 
-<!-- ADD EVENT MODAL (calendar click) -->
+<!-- DAY EVENTS MODAL (calendar click) -->
 <div class="modal-bg" id="ev-modal">
-  <div class="modal">
-    <h2>予定を追加</h2>
-    <p id="ev-modal-date" style="font-size:11.5px;color:var(--ink3);margin-bottom:10px"></p>
-    <input type="time" id="ev-time" placeholder="時間">
-    <input type="text" id="ev-name" placeholder="予定名">
-    <input type="text" id="ev-memo" placeholder="メモ（任意）">
-    <div style="display:flex;gap:8px;margin:8px 0 4px;align-items:center">
-      <span style="font-size:10.5px;color:var(--ink3)">色</span>
-      <button class="cdot on" data-color="#b45a1e" style="background:#b45a1e" onclick="evPickColor(this)"></button>
-      <button class="cdot" data-color="#3c6446" style="background:#3c6446" onclick="evPickColor(this)"></button>
-      <button class="cdot" data-color="#466496" style="background:#466496" onclick="evPickColor(this)"></button>
-      <button class="cdot" data-color="#785a28" style="background:#785a28" onclick="evPickColor(this)"></button>
-      <button class="cdot" data-color="#8b6496" style="background:#8b6496" onclick="evPickColor(this)"></button>
+  <div class="modal" style="max-width:500px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+      <h2 id="ev-modal-title" style="margin-bottom:0">予定</h2>
+      <span id="ev-modal-date" style="font-size:11.5px;color:var(--ink3)"></span>
     </div>
-    <div class="modal-actions">
-      <button class="modal-btn" onclick="closeModal('ev-modal')">キャンセル</button>
-      <button class="modal-btn primary" onclick="addEventFromModal()">追加する</button>
+    <div id="ev-day-list" style="margin-bottom:14px"></div>
+    <div id="ev-add-section">
+      <button class="gform-btn sec" id="ev-add-toggle" onclick="toggleEvAddForm(true)" style="width:100%">＋ 予定を追加</button>
+      <div id="ev-add-form" style="display:none;margin-top:10px;padding:12px;background:var(--card2);border:1px solid var(--bd);border-radius:10px">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="time" id="ev-time" style="flex:0 0 110px;padding:9px 12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--ink);font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none">
+          <input type="text" id="ev-name" placeholder="予定名" style="flex:1;padding:9px 12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--ink);font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none">
+        </div>
+        <input type="text" id="ev-memo" placeholder="メモ（任意）" style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--ink);font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:8px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <span style="font-size:10.5px;color:var(--ink3)">色</span>
+          <button class="cdot on" data-color="#b45a1e" style="background:#b45a1e" onclick="evPickColor(this)"></button>
+          <button class="cdot" data-color="#3c6446" style="background:#3c6446" onclick="evPickColor(this)"></button>
+          <button class="cdot" data-color="#466496" style="background:#466496" onclick="evPickColor(this)"></button>
+          <button class="cdot" data-color="#785a28" style="background:#785a28" onclick="evPickColor(this)"></button>
+          <button class="cdot" data-color="#8b6496" style="background:#8b6496" onclick="evPickColor(this)"></button>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="modal-btn" onclick="toggleEvAddForm(false)">キャンセル</button>
+          <button class="modal-btn primary" onclick="addEventFromModal()">追加する</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+      <button class="modal-btn" onclick="closeModal('ev-modal')">閉じる</button>
     </div>
   </div>
 </div>
+
+<style>
+.day-ev-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--bd);border-radius:10px;margin-bottom:6px}
+.day-ev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.day-ev-time{font-size:11.5px;color:var(--ink3);font-family:'Playfair Display',serif;width:48px;flex-shrink:0;font-weight:500}
+.day-ev-name{font-size:13px;color:var(--ink);flex:1;font-weight:500}
+.day-ev-memo{font-size:10.5px;color:var(--ink3);margin-top:1px}
+.day-ev-empty{padding:18px;text-align:center;font-size:12px;color:var(--ink3);background:var(--card2);border:1px dashed var(--bd);border-radius:10px}
+</style>
 
 <!-- ==================== DESKTOP ==================== -->
 <div class="desktop">
@@ -1112,19 +1134,62 @@ async function projAI(projId){
   }
 }
 
-// ===== EVENT MODAL =====
+// ===== DAY EVENTS MODAL (calendar click) =====
 let evModalDate='';
 let evModalColor='#b45a1e';
 function openEventModal(dateStr){
   evModalDate=dateStr;
   evModalColor='#b45a1e';
   document.getElementById('ev-modal-date').textContent=fmtDateLabel(dateStr);
+  // reset form fields
   document.getElementById('ev-time').value='09:00';
   document.getElementById('ev-name').value='';
   document.getElementById('ev-memo').value='';
   document.querySelectorAll('#ev-modal .cdot').forEach((d,i)=>{d.classList.toggle('on',i===0);});
+  // render the day's events list
+  renderDayList();
+  // open with form collapsed; if there are no events for the day, pre-expand the form for convenience
+  const hasEvents=S.schedule.some(s=>s.date===dateStr);
+  toggleEvAddForm(!hasEvents);
   openModal('ev-modal');
-  setTimeout(()=>document.getElementById('ev-name').focus(),50);
+}
+function renderDayList(){
+  const el=document.getElementById('ev-day-list');if(!el)return;
+  const items=S.schedule.filter(s=>s.date===evModalDate).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  if(items.length===0){
+    el.innerHTML='<div class="day-ev-empty">この日の予定はまだありません</div>';
+    return;
+  }
+  el.innerHTML=items.map(s=>`<div class="day-ev-row">
+    <span class="day-ev-dot" style="background:${s.color}"></span>
+    <span class="day-ev-time">${escapeHTML(s.time||'')}</span>
+    <div style="flex:1;min-width:0">
+      <div class="day-ev-name">${escapeHTML(s.name)}</div>
+      ${s.memo&&s.memo!=='-'?`<div class="day-ev-memo">${escapeHTML(s.memo)}</div>`:''}
+    </div>
+    <button class="tdel" onclick="deleteEventFromDay(${s.id})" title="削除">✕</button>
+  </div>`).join('');
+}
+function deleteEventFromDay(id){
+  S.schedule=S.schedule.filter(s=>s.id!==id);
+  save();render();
+  renderDayList();
+}
+function toggleEvAddForm(show){
+  const form=document.getElementById('ev-add-form');
+  const toggle=document.getElementById('ev-add-toggle');
+  if(!form||!toggle)return;
+  if(show){
+    form.style.display='block';
+    toggle.style.display='none';
+    setTimeout(()=>{const inp=document.getElementById('ev-name');if(inp)inp.focus();},50);
+  }else{
+    form.style.display='none';
+    toggle.style.display='block';
+    document.getElementById('ev-name').value='';
+    document.getElementById('ev-memo').value='';
+    document.getElementById('ev-time').value='09:00';
+  }
 }
 function evPickColor(btn){
   evModalColor=btn.getAttribute('data-color');
@@ -1137,8 +1202,10 @@ function addEventFromModal(){
   const memo=document.getElementById('ev-memo').value.trim()||'-';
   if(!name){document.getElementById('ev-name').focus();return;}
   S.schedule.push({id:Date.now(),time,name,memo,date:evModalDate,color:evModalColor});
-  closeModal('ev-modal');
+  // keep modal open, refresh day list, collapse form back, refresh main page
+  toggleEvAddForm(false);
   save();render();
+  renderDayList();
 }
 function saveDb(){
   const url=document.getElementById('sb-url').value.trim(),key=document.getElementById('sb-key').value.trim();
@@ -1586,7 +1653,7 @@ function init(){
   }
 }
 init();
-// build: full v5
+// build: full v6 (calendar day-view modal)
 </script>
 </body>
 </html>
