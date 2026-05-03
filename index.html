@@ -8,7 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="翔の手帳">
 <meta name="theme-color" content="#b45a1e">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>翔の手帳</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -707,9 +710,7 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
       <div class="m-hdr-ava">S</div>
     </div>
     <div class="m-content" id="m-content-home">
-      <div class="m-sec-lbl">本日の予定タスク</div>
-      <div class="m-card" id="m-tasks-card"></div>
-      <div class="m-sec-lbl">3日間の予定</div>
+      <div class="m-sec-lbl">本日の予定</div>
       <div class="m-sched-card">
         <div class="m-sched-hdr">
           <span class="m-sched-ttl">スケジュール</span>
@@ -721,6 +722,8 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
         </div>
         <div id="m-sched-content"></div>
       </div>
+      <div class="m-sec-lbl">今日のタスク</div>
+      <div class="m-card" id="m-tasks-card"></div>
     </div>
   </div>
 
@@ -1653,7 +1656,7 @@ function init(){
   }
 }
 init();
-// build: full v6 (calendar day-view modal)
+// build: full v8 (mobile home: 予定 → タスク 順に変更)
 </script>
 </body>
 </html>
