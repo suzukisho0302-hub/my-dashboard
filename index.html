@@ -332,6 +332,32 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
 .hbg{display:none;position:fixed;top:14px;left:14px;z-index:200;background:var(--sb);border:1px solid var(--bd);border-radius:6px;padding:9px;cursor:pointer;flex-direction:column;gap:4px}
 .hbg span{display:block;width:16px;height:1.5px;background:var(--ink2);border-radius:2px}
 
+/* TASK ADD FORM (inline) */
+.tform{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;margin:6px 0 14px}
+.tform-row{display:flex;gap:8px;align-items:center}
+.tform-inp{flex:1;padding:9px 12px;background:var(--card2);border:1px solid var(--bd);border-radius:8px;color:var(--ink);font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;min-width:0}
+.tform-inp:focus{border-color:var(--acc)}
+.tform-btn{padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;flex-shrink:0;transition:opacity .15s}
+.tform-btn:hover{opacity:.85}
+.tform-btn:disabled{opacity:.4;cursor:not-allowed}
+.tform-chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.tform-chip{padding:4px 10px;background:transparent;border:1px solid var(--bd);border-radius:14px;font-size:10.5px;color:var(--ink3);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s;line-height:1.4}
+.tform-chip:hover{border-color:var(--bd2);color:var(--ink2)}
+.tform-chip.on{border-color:var(--acc);color:var(--acc);background:rgba(181,90,30,.06);font-weight:500}
+.tform-lbl{font-size:9.5px;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-right:2px}
+
+/* TASK DELETE BUTTON */
+.tdel{width:24px;height:24px;border:1px solid var(--bd);border-radius:6px;background:transparent;color:var(--ink3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-family:inherit;flex-shrink:0;transition:all .15s;line-height:1;padding:0}
+.tdel:hover{border-color:#c44;color:#c44;background:rgba(196,68,68,.06)}
+.tdel-tbl{width:20px;height:20px;font-size:12px;border:none;background:transparent;color:var(--ink3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;transition:all .15s;padding:0;line-height:1}
+.tdel-tbl:hover{color:#c44;background:rgba(196,68,68,.08)}
+
+/* clickable checkboxes on mobile */
+.m-cb,.m-ti-chk{cursor:pointer}
+
+/* empty state */
+.t-empty{padding:14px;font-size:11.5px;color:var(--ink3);text-align:center;background:var(--card2);border:1px dashed var(--bd);border-radius:var(--r);margin-bottom:6px}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .desktop{display:none}
@@ -703,6 +729,57 @@ async function syncTo(){if(!sbClient)return;try{await sbClient.from('dashboard')
 async function syncFrom(){if(!sbClient)return;try{const{data}=await sbClient.from('dashboard').select('data').eq('id','main').single();if(data?.data){S={...S,...JSON.parse(data.data)};render();}}catch(e){}}
 function save(){localStorage.setItem(LSKEY,JSON.stringify(S));syncTo();}
 function load(){try{const d=localStorage.getItem(LSKEY);if(d)S={...S,...JSON.parse(d)};}catch(e){}}
+
+// ===== TASK CRUD =====
+const BADGES=[['work','仕事'],['study','研修'],['habit','習慣']];
+const PRIORITIES=[['high','高'],['mid','中'],['low','低']];
+let formSel={d:{badge:'work',priority:'mid'},m:{badge:'work',priority:'mid'}};
+function setFormBadge(p,b){formSel[p].badge=b;if(p==='d')renderDTasksFull();else renderMTaskFull();}
+function setFormPriority(p,pr){formSel[p].priority=pr;if(p==='d')renderDTasksFull();else renderMTaskFull();}
+function addTaskFromForm(p){
+  const inp=document.getElementById(p==='d'?'d-task-inp':'m-task-inp');
+  if(!inp)return;
+  const text=inp.value.trim();
+  if(!text){inp.focus();return;}
+  S.tasks.push({id:Date.now(),text,done:false,badge:formSel[p].badge,priority:formSel[p].priority});
+  inp.value='';
+  save();render();
+  const newInp=document.getElementById(p==='d'?'d-task-inp':'m-task-inp');
+  if(newInp)newInp.focus();
+}
+function toggleTask(id){
+  S.tasks=S.tasks.map(t=>t.id===id?{...t,done:!t.done}:t);
+  save();render();
+}
+function deleteTask(id){
+  S.tasks=S.tasks.filter(t=>t.id!==id);
+  save();render();
+}
+function taskFormHTML(p){
+  const sel=formSel[p];
+  const badgeChips=BADGES.map(([v,l])=>`<button class="tform-chip ${sel.badge===v?'on':''}" onclick="setFormBadge('${p}','${v}')">${l}</button>`).join('');
+  const prChips=PRIORITIES.map(([v,l])=>`<button class="tform-chip ${sel.priority===v?'on':''}" onclick="setFormPriority('${p}','${v}')">${l}</button>`).join('');
+  const inpId=p==='d'?'d-task-inp':'m-task-inp';
+  return `<div class="tform">
+    <div class="tform-row">
+      <input class="tform-inp" id="${inpId}" type="text" placeholder="新しいタスクを入力..." onkeydown="if(event.key==='Enter')addTaskFromForm('${p}')">
+      <button class="tform-btn" onclick="addTaskFromForm('${p}')">＋ 追加</button>
+    </div>
+    <div class="tform-chips">
+      <span class="tform-lbl">分類</span>${badgeChips}
+      <span class="tform-lbl" style="margin-left:6px">優先度</span>${prChips}
+    </div>
+  </div>`;
+}
+// preserve text input value across re-renders
+function preserveInpVal(id,fn){
+  const old=document.getElementById(id);
+  const v=old?old.value:'';
+  const focused=old&&document.activeElement===old;
+  fn();
+  const nu=document.getElementById(id);
+  if(nu){nu.value=v;if(focused){nu.focus();const len=nu.value.length;try{nu.setSelectionRange(len,len);}catch(e){}}}
+}
 function saveDb(){
   const url=document.getElementById('sb-url').value.trim(),key=document.getElementById('sb-key').value.trim();
   if(!url||!key)return alert('URLとAPIキーを入力してください');
@@ -792,11 +869,16 @@ function render(){
   const mel=document.getElementById('m-date');if(mel)mel.textContent=dateStr;
   const mtel=document.getElementById('m-task-date');if(mtel)mtel.textContent=dateStr;
 
+  // sidebar badge: count of undone tasks
+  const tb=document.getElementById('task-badge-d');
+  if(tb){const u=S.tasks.filter(t=>!t.done).length;tb.textContent=u;tb.style.display=u===0?'none':'';}
+
   renderDSchedule();renderDCal();renderDTasksHome();renderDMetrics();
   renderDTasksFull();renderDHabits();renderDProjects();renderDDiary();renderDMemo();
   renderMTasksCard();renderMSched();renderMCal();renderMTaskFull();
 }
 
+function escapeHTML(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function tagHTML(b){
   const m={'work':['仕事','tw'],'study':['研修','ts'],'habit':['習慣','th']};
   const [l,c]=m[b]||['',''];
@@ -848,11 +930,12 @@ function renderDCal(){calHTML('d-cal');calHTML('d-cal-full');}
 function renderDTasksHome(){
   const el=document.getElementById('d-tasks-home');if(!el)return;
   const tasks=S.tasks.slice(0,5);
-  el.innerHTML=`<table><thead><tr><th style="width:24px"></th><th>タスク</th><th>カテゴリ</th><th>優先度</th></tr></thead><tbody>
-    ${tasks.map(t=>`<tr><td><div class="cb ${t.done?'done':''}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></td>
-    <td ${t.done?'style="text-decoration:line-through;color:var(--ink3)"':''}>${t.text}</td>
-    <td>${tagHTML(t.badge)}</td><td>${prHTML(t.priority)}</td></tr>`).join('')}
-  </tbody></table><div class="tbl-add">+ タスクを追加</div>`;
+  el.innerHTML=`<table><thead><tr><th style="width:24px"></th><th>タスク</th><th>カテゴリ</th><th>優先度</th><th style="width:32px"></th></tr></thead><tbody>
+    ${tasks.length===0?'<tr><td colspan="5" style="text-align:center;color:var(--ink3);padding:18px">タスクはまだありません</td></tr>':tasks.map(t=>`<tr><td><div class="cb ${t.done?'done':''}" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></td>
+    <td ${t.done?'style="text-decoration:line-through;color:var(--ink3)"':''}>${escapeHTML(t.text)}</td>
+    <td>${tagHTML(t.badge)}</td><td>${prHTML(t.priority)}</td>
+    <td><button class="tdel-tbl" onclick="deleteTask(${t.id})" title="削除">✕</button></td></tr>`).join('')}
+  </tbody></table><div class="tbl-add" onclick="goPage('tasks',null)" style="cursor:pointer">+ タスクを追加（タスクページへ）</div>`;
 }
 
 function renderDMetrics(){
@@ -869,20 +952,24 @@ function renderDMetrics(){
 
 function renderDTasksFull(){
   const el=document.getElementById('d-tasks-full');if(!el)return;
-  const undone=S.tasks.filter(t=>!t.done);
-  const done=S.tasks.filter(t=>t.done);
-  el.innerHTML=`
-    <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">未完了 · ${undone.length}件</div>
-    ${undone.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px">
-      <div class="cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div style="flex:1"><div style="font-size:13px;color:var(--ink)">${t.text}</div><div style="margin-top:3px;display:flex;gap:5px">${tagHTML(t.badge)}${prHTML(t.priority)}</div></div>
-    </div>`).join('')}
-    <div class="tbl-add" style="border:1.5px dashed var(--bd2);border-radius:var(--r);margin-bottom:1rem">+ タスクを追加</div>
-    <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">完了済み · ${done.length}件</div>
-    ${done.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px;opacity:.6">
-      <div class="cb done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div style="font-size:13px;color:var(--ink3);text-decoration:line-through">${t.text}</div>
-    </div>`).join('')}`;
+  preserveInpVal('d-task-inp',()=>{
+    const undone=S.tasks.filter(t=>!t.done);
+    const done=S.tasks.filter(t=>t.done);
+    el.innerHTML=`
+      ${taskFormHTML('d')}
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">未完了 · ${undone.length}件</div>
+      ${undone.length===0?'<div class="t-empty">未完了のタスクはありません 🎉</div>':undone.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px">
+        <div class="cb" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1"><div style="font-size:13px;color:var(--ink)">${escapeHTML(t.text)}</div><div style="margin-top:3px;display:flex;gap:5px">${tagHTML(t.badge)}${prHTML(t.priority)}</div></div>
+        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
+      </div>`).join('')}
+      <div style="font-size:10px;color:var(--ink3);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.5px">完了済み · ${done.length}件</div>
+      ${done.length===0?'<div class="t-empty">完了済みのタスクはまだありません</div>':done.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px;opacity:.65">
+        <div class="cb done" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1;font-size:13px;color:var(--ink3);text-decoration:line-through">${escapeHTML(t.text)}</div>
+        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
+      </div>`).join('')}`;
+  });
 }
 
 function renderDHabits(){
@@ -923,11 +1010,11 @@ function renderDMemo(){
 // MOBILE RENDERS
 function renderMTasksCard(){
   const el=document.getElementById('m-tasks-card');if(!el)return;
-  const undone=S.tasks.filter(t=>!t.done).length;
   el.innerHTML=`<div class="m-card-hdr"><span class="m-card-ttl">今日のタスク</span><span class="m-card-badge">${S.tasks.length}件</span></div>
-    ${S.tasks.map(t=>`<div class="m-task-row">
-      <div class="m-cb ${t.done?'done':''}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div style="flex:1"><div class="m-tname ${t.done?'done':''}">${t.text}</div>${mTagHTML(t.badge)}</div>
+    ${S.tasks.length===0?'<div style="padding:18px;text-align:center;font-size:11.5px;color:var(--ink3)">タスクはまだありません<br><span style="font-size:10.5px">下のタブから「タスク」を選んで追加できます</span></div>':S.tasks.map(t=>`<div class="m-task-row">
+      <div class="m-cb ${t.done?'done':''}" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div style="flex:1"><div class="m-tname ${t.done?'done':''}">${escapeHTML(t.text)}</div>${mTagHTML(t.badge)}</div>
+      <button class="tdel-tbl" onclick="event.stopPropagation();deleteTask(${t.id})" title="削除">✕</button>
     </div>`).join('')}`;
 }
 
@@ -977,27 +1064,25 @@ function renderMCal(){
 
 function renderMTaskFull(){
   const el=document.getElementById('m-task-content');if(!el)return;
-  const undone=S.tasks.filter(t=>!t.done);
-  const done=S.tasks.filter(t=>t.done);
-  el.innerHTML=`
-    <div class="m-filter">
-      <button class="m-flt-btn active">すべて</button>
-      <button class="m-flt-btn">仕事</button>
-      <button class="m-flt-btn">研修</button>
-      <button class="m-flt-btn">習慣</button>
-    </div>
-    <div class="m-task-sec">未完了 · ${undone.length}件</div>
-    ${undone.map(t=>`<div class="m-task-item">
-      <div class="m-ti-chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div><div class="m-ti-name">${t.text}</div>
-      <div class="m-ti-meta">${mTagHTML(t.badge)}<span class="tag m-pr-${t.priority}" style="font-size:9px;padding:1px 6px;border-radius:6px">${t.priority==='high'?'高':t.priority==='mid'?'中':'低'}</span></div></div>
-    </div>`).join('')}
-    <button class="m-add-btn">＋ タスクを追加</button>
-    <div class="m-task-sec" style="margin-top:16px">完了済み · ${done.length}件</div>
-    ${done.map(t=>`<div class="m-task-item" style="opacity:.6">
-      <div class="m-ti-chk done"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div class="m-ti-name done">${t.text}</div>
-    </div>`).join('')}`;
+  preserveInpVal('m-task-inp',()=>{
+    const undone=S.tasks.filter(t=>!t.done);
+    const done=S.tasks.filter(t=>t.done);
+    el.innerHTML=`
+      ${taskFormHTML('m')}
+      <div class="m-task-sec">未完了 · ${undone.length}件</div>
+      ${undone.length===0?'<div class="t-empty">未完了のタスクはありません 🎉</div>':undone.map(t=>`<div class="m-task-item">
+        <div class="m-ti-chk" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1;min-width:0"><div class="m-ti-name">${escapeHTML(t.text)}</div>
+        <div class="m-ti-meta">${mTagHTML(t.badge)}<span class="tag m-pr-${t.priority}" style="font-size:9px;padding:1px 6px;border-radius:6px">${t.priority==='high'?'高':t.priority==='mid'?'中':'低'}</span></div></div>
+        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
+      </div>`).join('')}
+      <div class="m-task-sec" style="margin-top:16px">完了済み · ${done.length}件</div>
+      ${done.length===0?'<div class="t-empty">完了済みのタスクはまだありません</div>':done.map(t=>`<div class="m-task-item" style="opacity:.65">
+        <div class="m-ti-chk done" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="m-ti-name done" style="flex:1;min-width:0">${escapeHTML(t.text)}</div>
+        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
+      </div>`).join('')}`;
+  });
 }
 
 // ===== INIT =====
