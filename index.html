@@ -570,7 +570,7 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
       </div>
       <div class="ni" onclick="openAIKeyModal()">
         <svg class="ni-ic" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        <span class="ni-lbl">Claude API キー</span>
+        <span class="ni-lbl">Gemini API キー</span>
       </div>
     </nav>
     <div class="sb-bot">
@@ -1061,8 +1061,9 @@ function deleteMiniTask(projId,idx){
   save();render();
 }
 
-// ===== ANTHROPIC API KEY =====
-const API_KEY_LSK='sho_anthropic_key';
+// ===== GEMINI API KEY =====
+const API_KEY_LSK='sho_gemini_key';
+const API_KEY_LSK_LEGACY='sho_anthropic_key'; // backward-compat: don't use, just for migration
 function getAIKey(){return localStorage.getItem(API_KEY_LSK)||'';}
 function openAIKeyModal(){const inp=document.getElementById('ai-key-inp');if(inp)inp.value=getAIKey();openModal('ai-modal');}
 function saveAIKey(){
@@ -1070,39 +1071,53 @@ function saveAIKey(){
   if(!v){alert('APIキーを入力してください');return;}
   localStorage.setItem(API_KEY_LSK,v);
   closeModal('ai-modal');
-  alert('Claude API キーを保存しました');
+  alert('Gemini API キーを保存しました');
 }
 function clearAIKey(){
-  if(!confirm('Claude API キーを削除しますか？'))return;
+  if(!confirm('Gemini API キーを削除しますか？'))return;
   localStorage.removeItem(API_KEY_LSK);
   document.getElementById('ai-key-inp').value='';
   alert('削除しました');
 }
-async function callClaude({system,messages,maxTokens,model}){
+// Call Google Gemini API. messages = [{role:'user'|'assistant', content:'...'}, ...]
+async function callGemini({system,messages,maxTokens,model}){
   const key=getAIKey();
   if(!key)throw new Error('NOKEY');
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
+  const m=model||'gemini-2.0-flash';
+  // Gemini uses 'user' and 'model' roles
+  const contents=messages.map(msg=>({
+    role: msg.role==='assistant'?'model':'user',
+    parts:[{text: msg.content}]
+  }));
+  const body={
+    contents,
+    generationConfig:{
+      maxOutputTokens: maxTokens||600,
+      temperature: 0.7
+    }
+  };
+  if(system) body.systemInstruction={parts:[{text: system}]};
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`;
+  const res=await fetch(url,{
     method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':key,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body:JSON.stringify({
-      model:model||'claude-sonnet-4-20250514',
-      max_tokens:maxTokens||500,
-      system,
-      messages
-    })
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
   });
   if(!res.ok){
     const t=await res.text().catch(()=>'');
-    throw new Error('HTTP '+res.status+' '+t.slice(0,200));
+    let detail=t.slice(0,300);
+    try{const j=JSON.parse(t);if(j.error?.message)detail=j.error.message;}catch(e){}
+    throw new Error('HTTP '+res.status+': '+detail);
   }
   const data=await res.json();
-  return data.content?.[0]?.text||'';
+  // safety filter / no candidates
+  if(data.promptFeedback?.blockReason) throw new Error('ブロック: '+data.promptFeedback.blockReason);
+  const reply=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+  if(!reply) throw new Error('空の応答');
+  return reply;
 }
+// alias for any old code paths (none now)
+const callClaude=callGemini;
 
 // ===== PROJECT AI (mini-task auto-generation) =====
 async function projAI(projId){
@@ -1110,23 +1125,25 @@ async function projAI(projId){
   const status=document.getElementById('pj-ai-status-'+projId);
   const btn=document.getElementById('pj-ai-btn-'+projId);
   const q=inp.value.trim();if(!q)return;
-  if(!getAIKey()){if(confirm('Claude API キーが未設定です。設定しますか？'))openAIKeyModal();return;}
+  if(!getAIKey()){if(confirm('Gemini API キーが未設定です。設定しますか？'))openAIKeyModal();return;}
   const proj=S.projects.find(p=>p.id===projId);if(!proj)return;
-  btn.disabled=true;status.innerHTML='<span class="spin"></span>Claudeに相談中...';
+  btn.disabled=true;status.innerHTML='<span class="spin"></span>Geminiに相談中...';
   try{
     const sys=`あなたはタスク分解アシスタントです。以下のプロジェクトに対するユーザーの相談を受け、必要なミニタスクをJSONで提案してください。
 プロジェクト名: ${proj.name}
 既存ミニタスク: ${proj.tasks.map(t=>t.t).join(' / ')||'(なし)'}
-出力は必ず以下の純粋な JSON 配列のみ（前後にテキストやコードフェンス禁止）:
+出力は必ず以下の純粋な JSON 配列のみ（前後にテキストやコードフェンス禁止、説明文も禁止）:
 ["タスク1","タスク2","タスク3"]
 タスクは2〜6個、それぞれ12文字以内、日本語、具体的な動詞で始める。`;
-    const reply=await callClaude({system:sys,messages:[{role:'user',content:q}],maxTokens:400});
-    // extract JSON
-    const m=reply.match(/\[[\s\S]*\]/);
-    if(!m)throw new Error('JSON not found in reply: '+reply.slice(0,80));
+    const reply=await callGemini({system:sys,messages:[{role:'user',content:q}],maxTokens:500});
+    // extract JSON (Gemini sometimes wraps in code fences)
+    const cleaned=reply.replace(/```(?:json)?\s*/g,'').replace(/```/g,'').trim();
+    const m=cleaned.match(/\[[\s\S]*\]/);
+    if(!m)throw new Error('JSON not found in reply: '+reply.slice(0,120));
     const arr=JSON.parse(m[0]);
     if(!Array.isArray(arr))throw new Error('not an array');
     const newTasks=arr.filter(x=>typeof x==='string'&&x.trim()).map(t=>({t:t.trim(),d:false}));
+    if(newTasks.length===0)throw new Error('提案が0件でした');
     S.projects=S.projects.map(p=>p.id===projId?{...p,tasks:[...p.tasks,...newTasks]}:p);
     inp.value='';
     save();render();
@@ -1274,7 +1291,7 @@ async function sendAI(p){
   const inp=document.getElementById(p==='d'?'d-ai-inp':'m-ai-inp');
   const text=inp.value.trim();if(!text)return;
   if(!getAIKey()){
-    addAIMsg(p,'bot','Claude API キーが未設定です。左サイドバー「Claude API キー」から設定してください。');
+    addAIMsg(p,'bot','Gemini API キーが未設定です。サイドバー「Gemini API キー」から設定してください（無料枠あり）。');
     if(confirm('APIキーを今すぐ設定しますか？'))openAIKeyModal();
     return;
   }
@@ -1289,7 +1306,7 @@ async function sendAI(p){
 - プロジェクト: ${S.projects.map(p=>p.name).join('、')||'なし'}
 簡潔に日本語で答えてください（300字以内が目安）。`;
   try{
-    const reply=await callClaude({system:sys,messages:aiHist.slice(-10),maxTokens:600});
+    const reply=await callGemini({system:sys,messages:aiHist.slice(-10),maxTokens:600});
     rmTyping(p);aiHist.push({role:'assistant',content:reply});
     addAIMsg(p,'bot',escapeHTML(reply).replace(/\n/g,'<br>'));
   }catch(e){
@@ -1656,7 +1673,7 @@ function init(){
   }
 }
 init();
-// build: full v8 (mobile home: 予定 → タスク 順に変更)
+// build: full v9 (Anthropic → Google Gemini に切り替え、無料枠で動作)
 </script>
 </body>
 </html>
