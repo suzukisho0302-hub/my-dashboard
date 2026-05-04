@@ -436,6 +436,10 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
   .mobile{display:flex}
   .ai-fab{display:flex}
   .m-tabbar{display:block}
+  /* iOS Safari の自動ズーム防止: 入力欄フォントサイズを16px以上に */
+  input,textarea,select{font-size:16px !important}
+  /* ただし読み上げ専用の細かいUI要素はそのまま */
+  .tform-chip,.cb,.m-cb,.m-ti-chk,.hd,.cdot,.mood-btn,.tdel,.tdel-tbl,.gform-btn,.tform-btn,.ai-send-btn,.ai-sheet-send,.modal-btn,.aq-btn,.asq-btn{font-size:inherit !important}
 }
 @media(min-width:769px){
   .desktop{display:flex}
@@ -1843,7 +1847,7 @@ async function forceUpdate(){
   window.location.reload(true);
 }
 init();
-// build: full v14 (デモデータ削除 + AIアクション実行)
+// build: full v15 (iOS自動ズーム防止)
 </script>
 </body>
 </html>
