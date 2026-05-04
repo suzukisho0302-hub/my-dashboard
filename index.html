@@ -465,7 +465,13 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
     <h2>Gemini API キー設定</h2>
     <p>AIチャットには Google Gemini API（無料枠あり）を使用します。<br>キーは端末のローカルストレージにのみ保存されます。</p>
     <input type="password" id="ai-key-inp" placeholder="AIza...">
-    <div class="modal-note">無料枠: Gemini 1.5 Flash で 15req/分・1500req/日。<br>キーの取得: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--acc)">Google AI Studio</a><br>⚠ 共有端末では使わないでください（localStorage に平文で残ります）。</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <label style="font-size:11px;color:var(--ink3);min-width:50px">モデル</label>
+      <input type="text" id="ai-model-inp" placeholder="gemini-3-flash-preview" style="flex:1">
+      <button class="modal-btn" onclick="listGeminiModels()" style="font-size:10.5px;padding:6px 10px">一覧取得</button>
+    </div>
+    <div id="ai-models-list" style="font-size:10.5px;color:var(--ink3);max-height:120px;overflow-y:auto;margin-bottom:6px"></div>
+    <div class="modal-note">無料枠あり。キーの取得: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--acc)">Google AI Studio</a><br>「一覧取得」を押すと鈴木さんのキーで使えるモデルが出てきます（各モデルをクリックで選択）。<br>⚠ 共有端末では使わないでください。</div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeModal('ai-modal')">キャンセル</button>
       <button class="modal-btn" onclick="clearAIKey()">キー削除</button>
@@ -1063,27 +1069,66 @@ function deleteMiniTask(projId,idx){
 
 // ===== GEMINI API KEY =====
 const API_KEY_LSK='sho_gemini_key';
-const API_KEY_LSK_LEGACY='sho_anthropic_key'; // backward-compat: don't use, just for migration
+const AI_MODEL_LSK='sho_gemini_model';
+const API_KEY_LSK_LEGACY='sho_anthropic_key'; // backward-compat
+const DEFAULT_MODEL='gemini-3-flash-preview';
 function getAIKey(){return localStorage.getItem(API_KEY_LSK)||'';}
-function openAIKeyModal(){const inp=document.getElementById('ai-key-inp');if(inp)inp.value=getAIKey();openModal('ai-modal');}
+function getAIModel(){return localStorage.getItem(AI_MODEL_LSK)||DEFAULT_MODEL;}
+function openAIKeyModal(){
+  const inp=document.getElementById('ai-key-inp');if(inp)inp.value=getAIKey();
+  const minp=document.getElementById('ai-model-inp');if(minp)minp.value=getAIModel();
+  const list=document.getElementById('ai-models-list');if(list)list.innerHTML='';
+  openModal('ai-modal');
+}
 function saveAIKey(){
   const v=document.getElementById('ai-key-inp').value.trim();
+  const m=document.getElementById('ai-model-inp').value.trim()||DEFAULT_MODEL;
   if(!v){alert('APIキーを入力してください');return;}
   localStorage.setItem(API_KEY_LSK,v);
+  localStorage.setItem(AI_MODEL_LSK,m);
   closeModal('ai-modal');
-  alert('Gemini API キーを保存しました');
+  alert(`Gemini API キーを保存しました\nモデル: ${m}`);
 }
 function clearAIKey(){
   if(!confirm('Gemini API キーを削除しますか？'))return;
   localStorage.removeItem(API_KEY_LSK);
+  localStorage.removeItem(AI_MODEL_LSK);
   document.getElementById('ai-key-inp').value='';
+  document.getElementById('ai-model-inp').value='';
   alert('削除しました');
+}
+async function listGeminiModels(){
+  const inpKey=document.getElementById('ai-key-inp').value.trim();
+  const key=inpKey||getAIKey();
+  const list=document.getElementById('ai-models-list');
+  if(!key){list.innerHTML='<span style="color:#c44">先に API キーを入力してください</span>';return;}
+  list.innerHTML='<span class="spin"></span>取得中...';
+  try{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+encodeURIComponent(key));
+    if(!res.ok){
+      const t=await res.text().catch(()=>'');
+      let detail=t.slice(0,200);
+      try{const j=JSON.parse(t);if(j.error?.message)detail=j.error.message;}catch(e){}
+      throw new Error('HTTP '+res.status+': '+detail);
+    }
+    const data=await res.json();
+    const models=(data.models||[])
+      .filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent'))
+      .map(m=>m.name.replace(/^models\//,''))
+      .filter(n=>n.startsWith('gemini'))
+      .sort();
+    if(models.length===0){list.innerHTML='<span style="color:#c44">使えるモデルが見つかりません</span>';return;}
+    list.innerHTML='<div style="font-weight:500;color:var(--ink2);margin-bottom:4px">クリックで選択:</div>'+
+      models.map(m=>`<div style="padding:3px 6px;cursor:pointer;border-radius:4px;color:var(--acc)" onmouseover="this.style.background='rgba(181,90,30,.08)'" onmouseout="this.style.background=''" onclick="document.getElementById('ai-model-inp').value='${m}'">${m}</div>`).join('');
+  }catch(e){
+    list.innerHTML='<span style="color:#c44">エラー: '+escapeHTML(String(e.message||e))+'</span>';
+  }
 }
 // Call Google Gemini API. messages = [{role:'user'|'assistant', content:'...'}, ...]
 async function callGemini({system,messages,maxTokens,model}){
   const key=getAIKey();
   if(!key)throw new Error('NOKEY');
-  const m=model||'gemini-1.5-flash';
+  const m=model||getAIModel();
   // Gemini uses 'user' and 'model' roles
   const contents=messages.map(msg=>({
     role: msg.role==='assistant'?'model':'user',
@@ -1673,7 +1718,7 @@ function init(){
   }
 }
 init();
-// build: full v10 (Gemini 1.5 Flash に変更 = 無料枠安定)
+// build: full v12 (デフォルトモデルを Gemini 3 Flash Preview に)
 </script>
 </body>
 </html>
