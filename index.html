@@ -465,7 +465,7 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
     <h2>Gemini API キー設定</h2>
     <p>AIチャットには Google Gemini API（無料枠あり）を使用します。<br>キーは端末のローカルストレージにのみ保存されます。</p>
     <input type="password" id="ai-key-inp" placeholder="AIza...">
-    <div class="modal-note">無料枠: Gemini 2.0 Flash で 15req/分・1500req/日。<br>キーの取得: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--acc)">Google AI Studio</a><br>⚠ 共有端末では使わないでください（localStorage に平文で残ります）。</div>
+    <div class="modal-note">無料枠: Gemini 1.5 Flash で 15req/分・1500req/日。<br>キーの取得: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--acc)">Google AI Studio</a><br>⚠ 共有端末では使わないでください（localStorage に平文で残ります）。</div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeModal('ai-modal')">キャンセル</button>
       <button class="modal-btn" onclick="clearAIKey()">キー削除</button>
@@ -1083,7 +1083,7 @@ function clearAIKey(){
 async function callGemini({system,messages,maxTokens,model}){
   const key=getAIKey();
   if(!key)throw new Error('NOKEY');
-  const m=model||'gemini-2.0-flash';
+  const m=model||'gemini-1.5-flash';
   // Gemini uses 'user' and 'model' roles
   const contents=messages.map(msg=>({
     role: msg.role==='assistant'?'model':'user',
@@ -1673,7 +1673,7 @@ function init(){
   }
 }
 init();
-// build: full v9 (Anthropic → Google Gemini に切り替え、無料枠で動作)
+// build: full v10 (Gemini 1.5 Flash に変更 = 無料枠安定)
 </script>
 </body>
 </html>
