@@ -1,6 +1,6 @@
 // 翔の手帳 Service Worker
 // バージョン番号は index.html 更新のたび手動で上げてください（v9 v10 v11 ...）
-const SW_VERSION = 'v19';
+const SW_VERSION = 'v20';
 const CACHE_NAME = `sho-dashboard-${SW_VERSION}`;
 const ASSETS = [
   '/my-dashboard/',
@@ -11,9 +11,8 @@ const ASSETS = [
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap'
 ];
 
-// install: 新しいSWは即座にアクティベート
+// install: アセットをキャッシュ。skipWaitingはユーザーが「更新」を押した時だけ実行（バナーが一瞬で消えるのを防ぐ）
 self.addEventListener('install', e => {
-  self.skipWaiting(); // 待機状態を飛ばして即座に置き換える
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => {})
   );
