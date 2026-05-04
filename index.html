@@ -487,17 +487,11 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
   .mobile{display:flex}
   .ai-fab{display:flex}
   .m-tabbar{display:block}
-  /* iOS Safari 自動ズーム防止: 全input/textareaを16pxに上げつつ、padding削減で見た目を維持 */
+  /* iOS Safari 自動ズーム防止: input/textareaを16pxに */
   input[type="text"],input[type="password"],input[type="time"],input[type="date"],textarea,select,
-  .ai-sheet-input,.ai-inp,.gform-inp,.tform-inp,.proj-ai-inp{
+  .ai-sheet-input,.ai-inp,.gform-inp,.tform-inp,.proj-ai-inp,.gform-area{
     font-size:16px !important;
   }
-  /* compactにするためpadding控えめ */
-  .gform-inp,.tform-inp,.proj-ai-inp{padding:6px 10px !important}
-  .gform-area{padding:8px 10px !important;font-size:16px !important}
-  .ai-sheet-input{padding:7px 12px !important}
-  .ai-inp{padding:6px 11px !important}
-  .modal input,.modal textarea{font-size:16px !important;padding:7px 11px !important}
 }
 @media(min-width:769px){
   .desktop{display:flex}
@@ -1904,7 +1898,7 @@ async function forceUpdate(){
   window.location.reload(true);
 }
 init();
-// build: full v18 (全入力欄16px+padding圧縮で見た目維持しつつズーム防止)
+// build: full v19 (paddingは元のまま、font-sizeのみ16pxでバランス調整)
 </script>
 </body>
 </html>
