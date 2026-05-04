@@ -578,6 +578,10 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
         <svg class="ni-ic" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span class="ni-lbl">Gemini API キー</span>
       </div>
+      <div class="ni" onclick="forceUpdate()">
+        <svg class="ni-ic" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        <span class="ni-lbl">アプリを更新</span>
+      </div>
     </nav>
     <div class="sb-bot">
       <div class="sb-user">
@@ -812,38 +816,12 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
 // ===== STATE =====
 const LSKEY = 'sho_v4';
 let S = {
-  tasks: [
-    {id:1,text:'朝会の準備',done:true,badge:'work',priority:'mid'},
-    {id:2,text:'Java研修資料確認',done:false,badge:'study',priority:'high'},
-    {id:3,text:'英単語10個',done:true,badge:'habit',priority:'low'},
-    {id:4,text:'Phase2資料作成',done:false,badge:'study',priority:'high'},
-    {id:5,text:'Google Ads最適化',done:false,badge:'work',priority:'mid'}
-  ],
-  schedule: [
-    {id:1,time:'09:00',name:'朝会',memo:'チームMTG',day:0,color:'#466496'},
-    {id:2,time:'11:00',name:'Java研修 打ち合わせ',memo:'資料確認',day:0,color:'#b45a1e'},
-    {id:3,time:'14:00',name:'Google Ads レポート',memo:'-',day:0,color:'#3c6446'},
-    {id:4,time:'10:00',name:'自己学習',memo:'-',day:1,color:'#466496'},
-    {id:5,time:'09:00',name:'週次MTG',memo:'-',day:2,color:'#b45a1e'},
-    {id:6,time:'13:00',name:'Phase2 資料提出',memo:'-',day:2,color:'#3c6446'}
-  ], // note: day field auto-migrated to date by migrate() at boot
-  habits: [
-    {id:1,name:'朝の読書',days:[1,1,1,0,0,0,0]},
-    {id:2,name:'英語学習',days:[1,0,1,0,0,0,0]},
-    {id:3,name:'運動',days:[0,0,1,0,0,0,0]}
-  ],
-  projects: [
-    {id:1,name:'Java新人研修カリキュラム',tasks:[{t:'Phase1 Java基礎テキスト作成',d:true},{t:'Phase2 Web/DB資料作成',d:false},{t:'Phase3 Spring Boot実装',d:false}]},
-    {id:2,name:'ダッシュボード開発',tasks:[{t:'GitHub Pages公開',d:true},{t:'Supabase連携',d:true},{t:'手帳デザインに変更',d:false}]}
-  ],
-  memos: [
-    {id:1,title:'ダッシュボードアイデア',body:'手帳風デザインで温かみを出す。Notion配置がベスト。',date:'2026/04/25',type:'y'},
-    {id:2,title:'API rate limit 対策',body:'大量PDFは非同期処理でキューイングする方針で進める。',date:'2026/04/23',type:'b'}
-  ],
-  diaries: [
-    {id:1,date:'2026/04/25 09:00',mood:'🔥',text:'手帳風ダッシュボードのデザイン検討中。Notion風レイアウトがいい感じ。'},
-    {id:2,date:'2026/04/24 22:00',mood:'😊',text:'GitHub Pages公開完了！Supabase連携でスマホからもアクセスできた。'}
-  ],
+  tasks: [],
+  schedule: [],
+  habits: [],
+  projects: [],
+  memos: [],
+  diaries: [],
   weekmemo: ''
 };
 let sbClient = null;
@@ -970,10 +948,26 @@ function migrate(){
   if(Array.isArray(S.projects)){
     S.projects=S.projects.map(p=>({...p,tasks:Array.isArray(p.tasks)?p.tasks:[]}));
   }
-  // diaries / memos / projects: ensure id fields
+  // ensure id fields
   ['diaries','memos','projects','tasks','schedule','habits'].forEach(k=>{
     if(Array.isArray(S[k])){S[k]=S[k].map(it=>it.id?it:{...it,id:Date.now()+Math.floor(Math.random()*1000)});}
   });
+  // 一度だけ実行: 元の埋め込みデモデータを掃除（IDと名前の両方が一致するもの限定で削除）
+  if(!localStorage.getItem('sho_demo_cleared_v1')){
+    const demoTasks=['朝会の準備','Java研修資料確認','英単語10個','Phase2資料作成','Google Ads最適化'];
+    const demoSchedule=['朝会','Java研修 打ち合わせ','Google Ads レポート','自己学習','週次MTG','Phase2 資料提出'];
+    const demoHabits=['朝の読書','英語学習','運動'];
+    const demoProjects=['Java新人研修カリキュラム','ダッシュボード開発'];
+    const demoMemos=['ダッシュボードアイデア','API rate limit 対策'];
+    S.tasks=S.tasks.filter(t=>!(t.id<=10 && demoTasks.includes(t.text)));
+    S.schedule=S.schedule.filter(s=>!(s.id<=10 && demoSchedule.includes(s.name)));
+    S.habits=S.habits.filter(h=>!(h.id<=10 && demoHabits.includes(h.name)));
+    S.projects=S.projects.filter(p=>!(p.id<=10 && demoProjects.includes(p.name)));
+    S.memos=S.memos.filter(m=>!(m.id<=10 && demoMemos.includes(m.title)));
+    S.diaries=S.diaries.filter(d=>!(d.id<=10 && (((d.text||'').includes('手帳風ダッシュボード'))||((d.text||'').includes('GitHub Pages公開完了')))));
+    localStorage.setItem('sho_demo_cleared_v1','1');
+    save();
+  }
 }
 
 // ===== SCHEDULE CRUD =====
@@ -1332,6 +1326,47 @@ function addTyping(p){
 }
 function rmTyping(p){const el=document.getElementById(`typing-${p}`);if(el)el.remove();}
 
+// ===== AI ACTIONS =====
+// Claudeの返答から ```actions [...] ``` の形のJSONブロックを抜き出して、
+// 予定・タスク・習慣などを実際のSデータに追加する
+function executeAIActions(actionsStr){
+  let acts;
+  try{acts=JSON.parse(actionsStr);}catch(e){return [];}
+  if(!Array.isArray(acts))return [];
+  const summaries=[];
+  const todayStr=todayYMD();
+  for(const a of acts){
+    try{
+      if(a.action==='add_schedule'){
+        const date=a.date||todayStr;
+        S.schedule.push({id:Date.now()+Math.floor(Math.random()*1000),time:a.time||'09:00',name:String(a.name||'(無題)'),memo:String(a.memo||'-'),date,color:a.color||'#b45a1e'});
+        summaries.push(`📅 ${fmtDateLabel(date)} ${a.time||''} 「${a.name}」を予定に追加`);
+      }else if(a.action==='add_task'){
+        S.tasks.push({id:Date.now()+Math.floor(Math.random()*1000),text:String(a.text||'(無題)'),done:false,badge:['work','study','habit'].includes(a.badge)?a.badge:'work',priority:['high','mid','low'].includes(a.priority)?a.priority:'mid'});
+        summaries.push(`✅ タスク「${a.text}」を追加`);
+      }else if(a.action==='add_habit'){
+        S.habits.push({id:Date.now()+Math.floor(Math.random()*1000),name:String(a.name||'(無題)'),days:[0,0,0,0,0,0,0]});
+        summaries.push(`🔁 習慣「${a.name}」を追加`);
+      }else if(a.action==='add_memo'){
+        const d=new Date();
+        const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+        S.memos.unshift({id:Date.now()+Math.floor(Math.random()*1000),title:String(a.title||'(無題)'),body:String(a.body||''),date,type:a.type==='b'?'b':'y'});
+        summaries.push(`📝 メモ「${a.title}」を追加`);
+      }else if(a.action==='add_diary'){
+        const d=new Date();
+        const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        S.diaries.unshift({id:Date.now()+Math.floor(Math.random()*1000),date,mood:a.mood||'😊',text:String(a.text||'')});
+        summaries.push(`📖 日記を追加`);
+      }else if(a.action==='add_project'){
+        S.projects.push({id:Date.now()+Math.floor(Math.random()*1000),name:String(a.name||'(無題)'),tasks:Array.isArray(a.tasks)?a.tasks.map(t=>({t:String(t),d:false})):[]});
+        summaries.push(`📁 プロジェクト「${a.name}」を追加`);
+      }
+    }catch(e){console.error('action error',a,e);}
+  }
+  if(summaries.length>0){save();render();}
+  return summaries;
+}
+
 async function sendAI(p){
   const inp=document.getElementById(p==='d'?'d-ai-inp':'m-ai-inp');
   const text=inp.value.trim();if(!text)return;
@@ -1343,17 +1378,53 @@ async function sendAI(p){
   inp.value='';addAIMsg(p,'user',escapeHTML(text));
   aiHist.push({role:'user',content:text});
   addTyping(p);
-  const sys=`あなたは鈴木翔さん（ビジョン税理士法人勤務）専用ダッシュボードのAIアシスタントです。タスク管理・スケジュール整理・習慣アドバイスなど、日々の業務をサポートしてください。
-現在の状況:
+  const todayStr=todayYMD();
+  const tomorrowStr=addDaysYMD(todayStr,1);
+  const sys=`あなたは鈴木翔さん（ビジョン税理士法人勤務）専用ダッシュボードのAIアシスタントです。タスク管理・予定整理・習慣アドバイスなど、日々の業務をサポートします。
+
+【今日の日付】${todayStr}（${fmtDateLabel(todayStr)}）
+【明日の日付】${tomorrowStr}
+
+【現在の状況】
 - タスク: ${S.tasks.map(t=>t.text+(t.done?'(完了)':'')).join('、')||'なし'}
-- 今日の予定: ${S.schedule.filter(s=>s.date===todayYMD()).map(s=>s.time+' '+s.name).join('、')||'なし'}
+- 今日の予定: ${S.schedule.filter(s=>s.date===todayStr).map(s=>s.time+' '+s.name).join('、')||'なし'}
 - 習慣: ${S.habits.map(h=>h.name).join('、')||'なし'}
 - プロジェクト: ${S.projects.map(p=>p.name).join('、')||'なし'}
-簡潔に日本語で答えてください（300字以内が目安）。`;
+
+【重要：データ追加機能】
+ユーザーが何かを「追加して」「入れて」と頼んできたら、必ず通常の応答メッセージの後に、改行して以下の形式の純粋なJSONブロックを出力してください：
+
+\`\`\`actions
+[{"action":"add_schedule","date":"YYYY-MM-DD","time":"HH:MM","name":"予定名","memo":"メモ","color":"#b45a1e"}]
+\`\`\`
+
+利用可能なアクション:
+- add_schedule: 予定追加 {date,time,name,memo,color}（colorは#b45a1e赤茶/#3c6446緑/#466496青/#785a28茶/#8b6496紫から1つ）
+- add_task: タスク追加 {text,badge,priority}（badge: work/study/habit、priority: high/mid/low）
+- add_habit: 習慣追加 {name}
+- add_memo: メモ追加 {title,body,type}（type: y黄/b青）
+- add_diary: 日記追加 {mood,text}（mood: 😊🔥😌😞💪🎉🤔😴）
+- add_project: プロジェクト追加 {name,tasks:["ミニタスク1",...]}
+
+ユーザーが具体的に頼まなければJSONブロックは出力しないこと。
+回答本文は簡潔に日本語で（200字以内が目安）。`;
   try{
-    const reply=await callGemini({system:sys,messages:aiHist.slice(-10),maxTokens:600});
+    const reply=await callGemini({system:sys,messages:aiHist.slice(-10),maxTokens:800});
     rmTyping(p);aiHist.push({role:'assistant',content:reply});
-    addAIMsg(p,'bot',escapeHTML(reply).replace(/\n/g,'<br>'));
+    // actions ブロックを抽出して実行
+    const actionsMatch=reply.match(/```actions\s*([\s\S]*?)```/);
+    let displayText=reply;
+    let actionResults=[];
+    if(actionsMatch){
+      actionResults=executeAIActions(actionsMatch[1].trim());
+      displayText=reply.replace(/```actions[\s\S]*?```/g,'').trim();
+    }
+    let html=escapeHTML(displayText).replace(/\n/g,'<br>');
+    if(actionResults.length>0){
+      html+='<div style="margin-top:8px;padding:8px 10px;background:rgba(60,100,70,.08);border-left:3px solid var(--acc3);border-radius:4px;font-size:11px;line-height:1.6">'
+        +actionResults.map(s=>escapeHTML(s)).join('<br>')+'</div>';
+    }
+    addAIMsg(p,'bot',html);
   }catch(e){
     rmTyping(p);
     const msg=e.message==='NOKEY'?'APIキーが未設定です':'エラー: '+escapeHTML(String(e.message||e));
@@ -1712,13 +1783,67 @@ function init(){
   document.getElementById('m-page-home').style.display='flex';
   document.getElementById('m-page-home').style.flexDirection='column';
   render();
-  // SW
+  // SW + 自動更新
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered')).catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      console.log('SW registered');
+      // 1分ごとに新バージョンが無いかチェック（ページ開きっぱなしでも更新検知）
+      setInterval(()=>{try{reg.update();}catch(e){}}, 60*1000);
+      // ページにフォーカスが戻ったときもチェック
+      window.addEventListener('focus',()=>{try{reg.update();}catch(e){}});
+      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){try{reg.update();}catch(e){}}});
+      // 新しいSWがインストールされたら通知バナーを出す
+      reg.addEventListener('updatefound',()=>{
+        const nw=reg.installing;if(!nw)return;
+        nw.addEventListener('statechange',()=>{
+          if(nw.state==='installed' && navigator.serviceWorker.controller){
+            // 既に古いSWに支配されている = 更新あり
+            showUpdateBanner(nw);
+          }
+        });
+      });
+    }).catch(()=>{});
+    // 新SWが切り替わったら自動リロード
+    let _reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(_reloading)return;_reloading=true;
+      window.location.reload();
+    });
   }
 }
+function showUpdateBanner(newSW){
+  if(document.getElementById('upd-banner'))return;
+  const b=document.createElement('div');
+  b.id='upd-banner';
+  b.innerHTML=`<span>🎉 新バージョンがあります</span><button onclick="applyUpdate()">今すぐ更新</button>`;
+  b.style.cssText='position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:30px;font-size:12.5px;display:flex;align-items:center;gap:10px;z-index:1000;box-shadow:0 6px 24px rgba(0,0,0,.25);font-family:Noto Sans JP,sans-serif';
+  b.querySelector('button').style.cssText='background:var(--acc);color:#fff;border:none;padding:6px 12px;border-radius:16px;cursor:pointer;font-size:11.5px;font-family:inherit';
+  document.body.appendChild(b);
+  window._pendingSW=newSW;
+}
+function applyUpdate(){
+  // 待機中の新SWに skipWaiting を指示 → controllerchange 発火 → 自動リロード
+  if(window._pendingSW){window._pendingSW.postMessage('SKIP_WAITING');}
+  else if(navigator.serviceWorker.waiting){navigator.serviceWorker.waiting.postMessage('SKIP_WAITING');}
+  else{window.location.reload();}
+}
+// 設定メニュー用：強制更新（キャッシュ全削除＋再取得）
+async function forceUpdate(){
+  if(!confirm('アプリを最新版に強制更新しますか？\n（数秒かかります）'))return;
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){await r.unregister();}
+    }
+    if('caches' in window){
+      const keys=await caches.keys();
+      for(const k of keys){await caches.delete(k);}
+    }
+  }catch(e){}
+  window.location.reload(true);
+}
 init();
-// build: full v12 (デフォルトモデルを Gemini 3 Flash Preview に)
+// build: full v14 (デモデータ削除 + AIアクション実行)
 </script>
 </body>
 </html>
