@@ -430,6 +430,57 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
 .spin{display:inline-block;width:10px;height:10px;border:1.5px solid var(--bd);border-top-color:var(--acc);border-radius:50%;animation:spinAnim .8s linear infinite;vertical-align:middle;margin-right:5px}
 @keyframes spinAnim{to{transform:rotate(360deg)}}
 
+/* update banner: AIチャット (右下FAB) の真上にずっと表示 */
+.upd-banner{
+  position:fixed;
+  right:14px;
+  bottom:138px; /* mobile: tabbar高さ + FAB高さ + マージン */
+  background:var(--ink);
+  color:#fff;
+  padding:8px 10px 8px 12px;
+  border-radius:14px;
+  font-family:Noto Sans JP,sans-serif;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  z-index:99;
+  box-shadow:0 4px 18px rgba(0,0,0,.28);
+  animation:updBnFadeIn .4s ease-out;
+  max-width:170px;
+}
+.upd-banner button{
+  background:var(--acc);
+  color:#fff;
+  border:none;
+  padding:7px 12px;
+  border-radius:16px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:500;
+  font-family:inherit;
+  flex-shrink:0;
+}
+.upd-banner button:hover{opacity:.9}
+.upd-banner::after{
+  /* 吹き出し風の小さな三角 */
+  content:'';
+  position:absolute;
+  bottom:-6px;
+  right:30px;
+  width:0;height:0;
+  border-left:6px solid transparent;
+  border-right:6px solid transparent;
+  border-top:6px solid var(--ink);
+}
+@keyframes updBnFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:769px){
+  /* デスクトップ: 右AIパネルの中の右下に重ねるイメージ */
+  .upd-banner{
+    right:calc(var(--ai) - 252px); /* AIパネル内の右側に */
+    bottom:24px;
+  }
+}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .desktop{display:none}
@@ -1817,9 +1868,8 @@ function showUpdateBanner(newSW){
   if(document.getElementById('upd-banner'))return;
   const b=document.createElement('div');
   b.id='upd-banner';
-  b.innerHTML=`<span>🎉 新バージョンがあります</span><button onclick="applyUpdate()">今すぐ更新</button>`;
-  b.style.cssText='position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:30px;font-size:12.5px;display:flex;align-items:center;gap:10px;z-index:1000;box-shadow:0 6px 24px rgba(0,0,0,.25);font-family:Noto Sans JP,sans-serif';
-  b.querySelector('button').style.cssText='background:var(--acc);color:#fff;border:none;padding:6px 12px;border-radius:16px;cursor:pointer;font-size:11.5px;font-family:inherit';
+  b.className='upd-banner';
+  b.innerHTML=`<span style="font-size:11px;line-height:1.3">🎉 新バージョン<br>あります</span><button onclick="applyUpdate()">更新</button>`;
   document.body.appendChild(b);
   window._pendingSW=newSW;
 }
@@ -1845,7 +1895,7 @@ async function forceUpdate(){
   window.location.reload(true);
 }
 init();
-// build: full v16 (ズーム防止をAIチャット入力欄のみに限定)
+// build: full v17 (更新バナーの位置をAIチャット上に変更)
 </script>
 </body>
 </html>

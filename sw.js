@@ -1,6 +1,6 @@
 // 翔の手帳 Service Worker
 // バージョン番号は index.html 更新のたび手動で上げてください（v9 v10 v11 ...）
-const SW_VERSION = 'v16';
+const SW_VERSION = 'v17';
 const CACHE_NAME = `sho-dashboard-${SW_VERSION}`;
 const ASSETS = [
   '/my-dashboard/',
