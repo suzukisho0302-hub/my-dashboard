@@ -1052,6 +1052,49 @@ function curUser(){return S.users.find(u=>u.id===S.currentUserId)||S.users[0]||{
 function userById(id){if(id==='shared')return null;return S.users.find(u=>u.id===id);}
 function userColor(id){const u=userById(id);return u?u.color:'#9a8870';}
 function userLabel(id){if(id==='shared')return '👥共有';const u=userById(id);return u?u.name:'';}
+function userAvatarHTML(u,size){
+  const s=size||32;
+  if(u&&u.avatar){
+    return `<div style="width:${s}px;height:${s}px;border-radius:50%;background-image:url('${u.avatar}');background-size:cover;background-position:center;flex-shrink:0;border:2px solid ${u.color}"></div>`;
+  }
+  return `<div style="width:${s}px;height:${s}px;border-radius:50%;background:${u?u.color:'#9a8870'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${Math.round(s*0.4)}px;font-weight:500;flex-shrink:0">${escapeHTML(u?.initial||'?')}</div>`;
+}
+// 画像を圧縮してdataURLにしてuserにセット
+async function setUserAvatarFromFile(userId,file){
+  if(!file)return;
+  if(file.size>10*1024*1024){alert('ファイルが大きすぎます（10MBまで）');return;}
+  try{
+    const dataUrl=await new Promise((resolve,reject)=>{
+      const fr=new FileReader();
+      fr.onload=()=>resolve(fr.result);
+      fr.onerror=reject;
+      fr.readAsDataURL(file);
+    });
+    // canvasでリサイズ＋圧縮（256×256）
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=dataUrl;});
+    const SIZE=256;
+    const canvas=document.createElement('canvas');
+    canvas.width=SIZE;canvas.height=SIZE;
+    const ctx=canvas.getContext('2d');
+    // 中央クロップして正方形に
+    const minDim=Math.min(img.width,img.height);
+    const sx=(img.width-minDim)/2,sy=(img.height-minDim)/2;
+    ctx.drawImage(img,sx,sy,minDim,minDim,0,0,SIZE,SIZE);
+    const compressed=canvas.toDataURL('image/jpeg',0.85);
+    const u=S.users.find(x=>x.id===userId);
+    if(u){u.avatar=compressed;save();render();openUserModal();}
+  }catch(e){alert('画像読込エラー: '+e.message);}
+}
+function pickUserAvatar(userId){
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';
+  input.onchange=e=>setUserAvatarFromFile(userId,e.target.files[0]);
+  input.click();
+}
+function removeUserAvatar(userId){
+  const u=S.users.find(x=>x.id===userId);
+  if(u){delete u.avatar;save();render();openUserModal();}
+}
 function showAllUsers(){return localStorage.getItem('sho_show_all_users')==='1';}
 function visibleItems(arr){
   if(!Array.isArray(arr))return [];
@@ -1066,13 +1109,16 @@ function openUserModal(){
   if(list){
     list.innerHTML=S.users.map(u=>{
       const counts=`タスク${S.tasks.filter(x=>x.userId===u.id).length}/予定${S.schedule.filter(x=>x.userId===u.id).length}`;
-      return `<div class="user-row" onclick="switchUser(${u.id})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid ${u.id===S.currentUserId?'var(--acc)':'var(--bd)'};border-radius:8px;margin-bottom:6px;cursor:pointer;background:${u.id===S.currentUserId?'rgba(181,90,30,.06)':'transparent'}">
-      <div style="width:32px;height:32px;border-radius:50%;background:${u.color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">${escapeHTML(u.initial)}</div>
-      <div style="flex:1;font-size:13px;color:var(--ink)">${escapeHTML(u.name)}${u.id===S.currentUserId?' <span style="font-size:10px;color:var(--acc);margin-left:4px">(現在)</span>':''}<div style="font-size:10px;color:var(--ink3);margin-top:1px">${counts}</div></div>
+      return `<div class="user-row" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid ${u.id===S.currentUserId?'var(--acc)':'var(--bd)'};border-radius:8px;margin-bottom:6px;background:${u.id===S.currentUserId?'rgba(181,90,30,.06)':'transparent'}">
+      <div style="position:relative" onclick="event.stopPropagation();pickUserAvatar(${u.id})" title="アイコン変更" style="cursor:pointer">
+        ${userAvatarHTML(u,40)}
+        <div style="position:absolute;bottom:-2px;right:-2px;background:var(--card);border:1px solid var(--bd);border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer">📷</div>
+      </div>
+      <div style="flex:1;font-size:13px;color:var(--ink);cursor:pointer" onclick="switchUser(${u.id})">${escapeHTML(u.name)}${u.id===S.currentUserId?' <span style="font-size:10px;color:var(--acc);margin-left:4px">(現在)</span>':''}<div style="font-size:10px;color:var(--ink3);margin-top:1px">${counts}</div></div>
+      ${u.avatar?`<button class="tdel-tbl" onclick="event.stopPropagation();removeUserAvatar(${u.id})" title="アイコン削除" style="font-size:11px">🗑️</button>`:''}
       ${S.users.length>1?`<button class="tdel" onclick="event.stopPropagation();deleteUser(${u.id})" title="削除">✕</button>`:''}
     </div>`;}).join('');
   }
-  // 表示モードボタンの状態を更新
   const sa=document.getElementById('show-all-btn');
   if(sa)sa.textContent=showAllUsers()?'✅ 全員のものを表示中':'⚪ 自分＋共有のみ表示中';
   openModal('user-modal');
@@ -1849,10 +1895,23 @@ function render(){
   if(tb){const u=visibleItems(S.tasks).filter(t=>!t.done).length;tb.textContent=u;tb.style.display=u===0?'none':'';}
   // current user display
   const cu=curUser();
-  const ava=document.getElementById('sb-ava-d'),uname=document.getElementById('sb-uname-d');
-  if(ava){ava.textContent=cu.initial;ava.style.background=cu.color;}
-  if(uname)uname.textContent=cu.name;
-  document.querySelectorAll('.m-hdr-ava').forEach(el=>{el.textContent=cu.initial;el.style.background=cu.color;});
+  const applyAva=(el)=>{
+    if(!el)return;
+    if(cu.avatar){
+      el.textContent='';
+      el.style.backgroundImage=`url('${cu.avatar}')`;
+      el.style.backgroundSize='cover';
+      el.style.backgroundPosition='center';
+      el.style.background=`url('${cu.avatar}') center/cover, ${cu.color}`;
+    }else{
+      el.textContent=cu.initial;
+      el.style.backgroundImage='';
+      el.style.background=cu.color;
+    }
+  };
+  applyAva(document.getElementById('sb-ava-d'));
+  const uname=document.getElementById('sb-uname-d');if(uname)uname.textContent=cu.name;
+  document.querySelectorAll('.m-hdr-ava').forEach(applyAva);
 
   renderDSchedule();renderDCal();renderDTasksHome();renderDMetrics();
   renderDTasksFull();renderDHabits();renderDProjects();renderDDiary();renderDMemo();
@@ -2479,7 +2538,7 @@ async function forceUpdate(){
   window.location.reload(true);
 }
 init();
-// build: full v24 (自動同期・全ユーザー表示UX改善・ID重複防止)
+// build: full v25 (ユーザーアイコン画像対応)
 </script>
 </body>
 </html>
