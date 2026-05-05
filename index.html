@@ -521,6 +521,33 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
   </div>
 </div>
 
+<!-- USER PICKER MODAL -->
+<div class="modal-bg" id="user-modal">
+  <div class="modal" style="max-width:420px">
+    <h2>ユーザー切替</h2>
+    <p style="font-size:11.5px;color:var(--ink3);margin-bottom:10px">タップして切り替え。共有予定（👥）は全員に表示されます。</p>
+    <div id="user-list" style="margin-bottom:14px"></div>
+    <div style="border-top:1px solid var(--bd);padding-top:12px">
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:8px">ユーザー追加</p>
+      <input type="text" id="user-name" placeholder="名前（例: 彼女）" style="margin-bottom:6px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <span style="font-size:10.5px;color:var(--ink3)">色</span>
+        <button class="cdot on" data-color="#8b6496" style="background:#8b6496" onclick="pickUserColor(this)"></button>
+        <button class="cdot" data-color="#3c6446" style="background:#3c6446" onclick="pickUserColor(this)"></button>
+        <button class="cdot" data-color="#466496" style="background:#466496" onclick="pickUserColor(this)"></button>
+        <button class="cdot" data-color="#b45a1e" style="background:#b45a1e" onclick="pickUserColor(this)"></button>
+        <button class="cdot" data-color="#785a28" style="background:#785a28" onclick="pickUserColor(this)"></button>
+      </div>
+      <input type="hidden" id="user-color" data-color="#8b6496">
+      <button class="modal-btn primary" onclick="addUserFromForm()" style="width:100%">＋ ユーザーを追加</button>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;border-top:1px solid var(--bd);padding-top:12px">
+      <button class="modal-btn" onclick="toggleShowAllUsers()">表示モード切替</button>
+      <button class="modal-btn" onclick="closeModal('user-modal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- GEMINI API KEY MODAL -->
 <div class="modal-bg" id="ai-modal">
   <div class="modal">
@@ -670,9 +697,10 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
       </div>
     </nav>
     <div class="sb-bot">
-      <div class="sb-user">
-        <div class="sb-ava">S</div>
-        <div class="sb-uname">鈴木 翔</div>
+      <div class="sb-user" onclick="openUserModal()" id="sb-user-d" title="ユーザー切替">
+        <div class="sb-ava" id="sb-ava-d">S</div>
+        <div class="sb-uname" id="sb-uname-d">鈴木 翔</div>
+        <span style="margin-left:auto;font-size:11px;color:var(--ink3)">▼</span>
       </div>
       <div class="db-pill"><div class="db-dot" id="db-dot-d"></div><span id="db-lbl-d">local</span></div>
     </div>
@@ -815,7 +843,7 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
         <div class="m-hdr-title">翔の日程管理</div>
         <div class="m-hdr-sub" id="m-date"></div>
       </div>
-      <div class="m-hdr-ava">S</div>
+      <div class="m-hdr-ava" onclick="openUserModal()" style="cursor:pointer" title="ユーザー切替">S</div>
     </div>
     <div class="m-content" id="m-content-home">
       <div class="m-sec-lbl">本日の予定</div>
@@ -842,7 +870,7 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
         <div class="m-hdr-title">カレンダー</div>
         <div class="m-hdr-sub">2026年4月</div>
       </div>
-      <div class="m-hdr-ava">S</div>
+      <div class="m-hdr-ava" onclick="openUserModal()" style="cursor:pointer" title="ユーザー切替">S</div>
     </div>
     <div class="m-content">
       <div class="m-cal-wrap" id="m-cal"></div>
@@ -856,7 +884,7 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
         <div class="m-hdr-title">タスク管理</div>
         <div class="m-hdr-sub" id="m-task-date"></div>
       </div>
-      <div class="m-hdr-ava">S</div>
+      <div class="m-hdr-ava" onclick="openUserModal()" style="cursor:pointer" title="ユーザー切替">S</div>
     </div>
     <div class="m-content" id="m-task-content"></div>
   </div>
@@ -922,7 +950,9 @@ let S = {
   projects: [],
   memos: [],
   diaries: [],
-  weekmemo: ''
+  weekmemo: '',
+  users: [],
+  currentUserId: null
 };
 let sbClient = null;
 let aiHist = [];
@@ -951,6 +981,57 @@ async function syncFrom(){if(!sbClient)return;try{const{data}=await sbClient.fro
 function save(){localStorage.setItem(LSKEY,JSON.stringify(S));syncTo();try{scheduleNotifications();}catch(e){}}
 function load(){try{const d=localStorage.getItem(LSKEY);if(d)S={...S,...JSON.parse(d)};}catch(e){}}
 // migrate() is called after load() in init()
+
+// ===== USERS =====
+function curUser(){return S.users.find(u=>u.id===S.currentUserId)||S.users[0]||{id:1,name:'',color:'#b45a1e',initial:'?'};}
+function userById(id){if(id==='shared')return null;return S.users.find(u=>u.id===id);}
+function userColor(id){const u=userById(id);return u?u.color:'#9a8870';}
+function userLabel(id){if(id==='shared')return '👥共有';const u=userById(id);return u?u.name:'';}
+function showAllUsers(){return localStorage.getItem('sho_show_all_users')==='1';}
+function visibleItems(arr){
+  if(!Array.isArray(arr))return [];
+  if(showAllUsers())return arr;
+  const cu=S.currentUserId;
+  return arr.filter(it=>!it.userId||it.userId===cu||it.userId==='shared');
+}
+function switchUser(id){S.currentUserId=id;save();render();closeModal('user-modal');}
+function toggleShowAllUsers(){const cur=showAllUsers();localStorage.setItem('sho_show_all_users',cur?'0':'1');render();alert(cur?'自分＋共有のみ表示':'全ユーザー表示');}
+function openUserModal(){
+  const list=document.getElementById('user-list');
+  if(list){
+    list.innerHTML=S.users.map(u=>`<div class="user-row" onclick="switchUser(${u.id})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid ${u.id===S.currentUserId?'var(--acc)':'var(--bd)'};border-radius:8px;margin-bottom:6px;cursor:pointer;background:${u.id===S.currentUserId?'rgba(181,90,30,.06)':'transparent'}">
+      <div style="width:32px;height:32px;border-radius:50%;background:${u.color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">${escapeHTML(u.initial)}</div>
+      <div style="flex:1;font-size:13px;color:var(--ink)">${escapeHTML(u.name)}${u.id===S.currentUserId?' <span style="font-size:10px;color:var(--acc);margin-left:4px">(現在)</span>':''}</div>
+      ${S.users.length>1?`<button class="tdel" onclick="event.stopPropagation();deleteUser(${u.id})" title="削除">✕</button>`:''}
+    </div>`).join('');
+  }
+  openModal('user-modal');
+}
+function addUserFromForm(){
+  const name=document.getElementById('user-name').value.trim();
+  const color=document.getElementById('user-color').dataset.color||'#8b6496';
+  if(!name){document.getElementById('user-name').focus();return;}
+  const id=Math.max(0,...S.users.map(u=>u.id||0))+1;
+  S.users.push({id,name,color,initial:name[0]||'?'});
+  document.getElementById('user-name').value='';
+  save();openUserModal();render();
+}
+function pickUserColor(btn){
+  document.querySelectorAll('#user-modal .cdot').forEach(d=>d.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('user-color').dataset.color=btn.getAttribute('data-color');
+}
+function deleteUser(id){
+  if(S.users.length<=1){alert('最後のユーザーは削除できません');return;}
+  const u=userById(id);
+  if(!confirm(`ユーザー「${u?.name}」を削除しますか？\nこのユーザーの全アイテム（タスク・予定など）も削除されます`))return;
+  ['tasks','schedule','habits','memos','diaries','projects'].forEach(k=>{
+    if(Array.isArray(S[k]))S[k]=S[k].filter(it=>it.userId!==id);
+  });
+  S.users=S.users.filter(u=>u.id!==id);
+  if(S.currentUserId===id)S.currentUserId=S.users[0].id;
+  save();openUserModal();render();
+}
 
 // ===== EDIT STATE =====
 let editing={kind:null,id:null}; // {kind:'task'|'sched'|'habit'|'memo'|'diary'|'project'|'minitask',id,extra?}
@@ -992,7 +1073,7 @@ function addTaskFromForm(p){
   if(!inp)return;
   const text=inp.value.trim();
   if(!text){inp.focus();return;}
-  S.tasks.push({id:Date.now(),text,done:false,badge:formSel[p].badge,priority:formSel[p].priority});
+  S.tasks.push({id:Date.now(),text,done:false,badge:formSel[p].badge,priority:formSel[p].priority,userId:S.currentUserId});
   inp.value='';
   save();render();
   const newInp=document.getElementById(p==='d'?'d-task-inp':'m-task-inp');
@@ -1082,6 +1163,19 @@ function migrate(){
   ['diaries','memos','projects','tasks','schedule','habits'].forEach(k=>{
     if(Array.isArray(S[k])){S[k]=S[k].map(it=>it.id?it:{...it,id:Date.now()+Math.floor(Math.random()*1000)});}
   });
+  // ユーザー初期化: 既存データには翔ユーザーを設定
+  if(!Array.isArray(S.users)||S.users.length===0){
+    S.users=[{id:1,name:'翔',color:'#b45a1e',initial:'S'}];
+    S.currentUserId=1;
+    ['tasks','schedule','habits','memos','diaries','projects'].forEach(k=>{
+      if(Array.isArray(S[k]))S[k].forEach(it=>{if(!it.userId)it.userId=1;});
+    });
+  }
+  if(!S.currentUserId)S.currentUserId=S.users[0]?.id||1;
+  // 古いアイテムにuserIdが無いやつは現在ユーザーへ
+  ['tasks','schedule','habits','memos','diaries','projects'].forEach(k=>{
+    if(Array.isArray(S[k]))S[k].forEach(it=>{if(!it.userId)it.userId=S.currentUserId;});
+  });
   // 一度だけ実行: 元の埋め込みデモデータを掃除（IDと名前の両方が一致するもの限定で削除）
   if(!localStorage.getItem('sho_demo_cleared_v1')){
     const demoTasks=['朝会の準備','Java研修資料確認','英単語10個','Phase2資料作成','Google Ads最適化'];
@@ -1111,7 +1205,7 @@ function addScheduleFromForm(p){
   const memo=document.getElementById('sch-memo-'+p).value.trim();
   const date=document.getElementById('sch-date-'+p).value||todayYMD();
   if(!name){document.getElementById('sch-name-'+p).focus();return;}
-  S.schedule.push({id:Date.now(),time:time||'09:00',name,memo:memo||'-',date,color:schForm.color,repeat:schForm.repeat||'none'});
+  S.schedule.push({id:Date.now(),time:time||'09:00',name,memo:memo||'-',date,color:schForm.color,repeat:schForm.repeat||'none',userId:S.currentUserId});
   document.getElementById('sch-name-'+p).value='';
   document.getElementById('sch-memo-'+p).value='';
   save();render();
@@ -1124,7 +1218,7 @@ function expandedSchedule(){
   const today=new Date();today.setHours(0,0,0,0);
   const horizonDays=120;
   const horizon=new Date(today);horizon.setDate(today.getDate()+horizonDays);
-  for(const s of S.schedule){
+  for(const s of visibleItems(S.schedule)){
     out.push(s);
     const r=s.repeat;if(!r||r==='none')continue;
     const base=new Date((s.date||todayYMD())+'T00:00:00');
@@ -1150,7 +1244,7 @@ function addHabitFromForm(){
   const inp=document.getElementById('hb-name');
   const name=inp.value.trim();
   if(!name){inp.focus();return;}
-  S.habits.push({id:Date.now(),name,days:[0,0,0,0,0,0,0]});
+  S.habits.push({id:Date.now(),name,days:[0,0,0,0,0,0,0],userId:S.currentUserId});
   inp.value='';
   save();render();
 }
@@ -1165,7 +1259,7 @@ function addDiaryFromForm(){
   if(!text){ta.focus();return;}
   const d=new Date();
   const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  S.diaries.unshift({id:Date.now(),date,mood:diaryForm.mood,text});
+  S.diaries.unshift({id:Date.now(),date,mood:diaryForm.mood,text,userId:S.currentUserId});
   ta.value='';
   save();render();
 }
@@ -1182,7 +1276,7 @@ function addMemoFromForm(){
   if(!title&&!body){ti.focus();return;}
   const d=new Date();
   const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-  S.memos.unshift({id:Date.now(),title:title||'(無題)',body:body||'',date,type:memoForm.type});
+  S.memos.unshift({id:Date.now(),title:title||'(無題)',body:body||'',date,type:memoForm.type,userId:S.currentUserId});
   ti.value='';bo.value='';
   save();render();
 }
@@ -1193,7 +1287,7 @@ function addProjectFromForm(){
   const inp=document.getElementById('pj-name');
   const name=inp.value.trim();
   if(!name){inp.focus();return;}
-  S.projects.push({id:Date.now(),name,tasks:[]});
+  S.projects.push({id:Date.now(),name,tasks:[],userId:S.currentUserId});
   inp.value='';
   save();render();
 }
@@ -1376,11 +1470,14 @@ function renderDayList(){
   el.innerHTML=items.map(s=>{
     const realId=s._origId||s.id;
     const repIcon=s.repeat&&s.repeat!=='none'?`<span title="繰り返し（削除すると全シリーズ消えます）" style="margin-left:4px;font-size:10px;color:var(--ink3)">🔁</span>`:'';
+    let userBadge='';
+    if(s.userId==='shared')userBadge=`<span style="margin-left:6px;font-size:10px;color:var(--acc3);background:rgba(60,100,70,.1);padding:1px 6px;border-radius:8px">👥 共有</span>`;
+    else if(s.userId&&s.userId!==S.currentUserId){const u=userById(s.userId);if(u)userBadge=`<span style="margin-left:6px;font-size:10px;color:#fff;background:${u.color};padding:1px 6px;border-radius:8px">${escapeHTML(u.name)}</span>`;}
     return `<div class="day-ev-row">
       <span class="day-ev-dot" style="background:${s.color}"></span>
       <span class="day-ev-time">${escapeHTML(s.time||'')}</span>
       <div style="flex:1;min-width:0">
-        <div class="day-ev-name">${escapeHTML(s.name)}${repIcon}</div>
+        <div class="day-ev-name">${escapeHTML(s.name)}${repIcon}${userBadge}</div>
         ${s.memo&&s.memo!=='-'?`<div class="day-ev-memo">${escapeHTML(s.memo)}</div>`:''}
       </div>
       <button class="tdel" onclick="deleteEventFromDay(${realId})" title="削除">✕</button>
@@ -1493,6 +1590,16 @@ function rmTyping(p){const el=document.getElementById(`typing-${p}`);if(el)el.re
 // ===== AI ACTIONS =====
 // Claudeの返答から ```actions [...] ``` の形のJSONブロックを抜き出して、
 // 予定・タスク・習慣などを実際のSデータに追加する
+function resolveUserId(spec){
+  // spec can be 'shared', a user id (number), a user name (string), or undefined
+  if(spec==='shared')return 'shared';
+  if(typeof spec==='number'&&S.users.find(u=>u.id===spec))return spec;
+  if(typeof spec==='string'){
+    const u=S.users.find(u=>u.name===spec||String(u.id)===spec);
+    if(u)return u.id;
+  }
+  return S.currentUserId;
+}
 function executeAIActions(actionsStr){
   let acts;
   try{acts=JSON.parse(actionsStr);}catch(e){return [];}
@@ -1501,29 +1608,31 @@ function executeAIActions(actionsStr){
   const todayStr=todayYMD();
   for(const a of acts){
     try{
+      const uid=resolveUserId(a.userId);
+      const uTag=uid==='shared'?' 👥':(uid!==S.currentUserId?` (${userLabel(uid)})`:'');
       if(a.action==='add_schedule'){
         const date=a.date||todayStr;
-        S.schedule.push({id:Date.now()+Math.floor(Math.random()*1000),time:a.time||'09:00',name:String(a.name||'(無題)'),memo:String(a.memo||'-'),date,color:a.color||'#b45a1e'});
-        summaries.push(`📅 ${fmtDateLabel(date)} ${a.time||''} 「${a.name}」を予定に追加`);
+        S.schedule.push({id:Date.now()+Math.floor(Math.random()*1000),time:a.time||'09:00',name:String(a.name||'(無題)'),memo:String(a.memo||'-'),date,color:a.color||'#b45a1e',repeat:['daily','weekly','monthly'].includes(a.repeat)?a.repeat:'none',userId:uid});
+        summaries.push(`📅 ${fmtDateLabel(date)} ${a.time||''} 「${a.name}」を予定に追加${uTag}`);
       }else if(a.action==='add_task'){
-        S.tasks.push({id:Date.now()+Math.floor(Math.random()*1000),text:String(a.text||'(無題)'),done:false,badge:['work','study','habit'].includes(a.badge)?a.badge:'work',priority:['high','mid','low'].includes(a.priority)?a.priority:'mid'});
-        summaries.push(`✅ タスク「${a.text}」を追加`);
+        S.tasks.push({id:Date.now()+Math.floor(Math.random()*1000),text:String(a.text||'(無題)'),done:false,badge:['work','study','habit'].includes(a.badge)?a.badge:'work',priority:['high','mid','low'].includes(a.priority)?a.priority:'mid',userId:uid});
+        summaries.push(`✅ タスク「${a.text}」を追加${uTag}`);
       }else if(a.action==='add_habit'){
-        S.habits.push({id:Date.now()+Math.floor(Math.random()*1000),name:String(a.name||'(無題)'),days:[0,0,0,0,0,0,0]});
-        summaries.push(`🔁 習慣「${a.name}」を追加`);
+        S.habits.push({id:Date.now()+Math.floor(Math.random()*1000),name:String(a.name||'(無題)'),days:[0,0,0,0,0,0,0],userId:uid});
+        summaries.push(`🔁 習慣「${a.name}」を追加${uTag}`);
       }else if(a.action==='add_memo'){
         const d=new Date();
         const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-        S.memos.unshift({id:Date.now()+Math.floor(Math.random()*1000),title:String(a.title||'(無題)'),body:String(a.body||''),date,type:a.type==='b'?'b':'y'});
-        summaries.push(`📝 メモ「${a.title}」を追加`);
+        S.memos.unshift({id:Date.now()+Math.floor(Math.random()*1000),title:String(a.title||'(無題)'),body:String(a.body||''),date,type:a.type==='b'?'b':'y',userId:uid});
+        summaries.push(`📝 メモ「${a.title}」を追加${uTag}`);
       }else if(a.action==='add_diary'){
         const d=new Date();
         const date=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        S.diaries.unshift({id:Date.now()+Math.floor(Math.random()*1000),date,mood:a.mood||'😊',text:String(a.text||'')});
-        summaries.push(`📖 日記を追加`);
+        S.diaries.unshift({id:Date.now()+Math.floor(Math.random()*1000),date,mood:a.mood||'😊',text:String(a.text||''),userId:uid});
+        summaries.push(`📖 日記を追加${uTag}`);
       }else if(a.action==='add_project'){
-        S.projects.push({id:Date.now()+Math.floor(Math.random()*1000),name:String(a.name||'(無題)'),tasks:Array.isArray(a.tasks)?a.tasks.map(t=>({t:String(t),d:false})):[]});
-        summaries.push(`📁 プロジェクト「${a.name}」を追加`);
+        S.projects.push({id:Date.now()+Math.floor(Math.random()*1000),name:String(a.name||'(無題)'),tasks:Array.isArray(a.tasks)?a.tasks.map(t=>({t:String(t),d:false})):[],userId:uid});
+        summaries.push(`📁 プロジェクト「${a.name}」を追加${uTag}`);
       }
     }catch(e){console.error('action error',a,e);}
   }
@@ -1544,31 +1653,45 @@ async function sendAI(p){
   addTyping(p);
   const todayStr=todayYMD();
   const tomorrowStr=addDaysYMD(todayStr,1);
-  const sys=`あなたは鈴木翔さん（ビジョン税理士法人勤務）専用ダッシュボードのAIアシスタントです。タスク管理・予定整理・習慣アドバイスなど、日々の業務をサポートします。
+  const cu=curUser();
+  const otherUsers=S.users.filter(u=>u.id!==S.currentUserId);
+  const userListStr=S.users.map(u=>`${u.name}(id=${u.id})`).join('、');
+  const visT=visibleItems(S.tasks),visS=visibleItems(S.schedule),visH=visibleItems(S.habits),visP=visibleItems(S.projects);
+  const sys=`あなたは鈴木翔さんとそのパートナー専用の共有ダッシュボードAIアシスタントです。タスク管理・予定整理・習慣アドバイスなど、日々の業務をサポートします。
 
 【今日の日付】${todayStr}（${fmtDateLabel(todayStr)}）
 【明日の日付】${tomorrowStr}
 
-【現在の状況】
-- タスク: ${S.tasks.map(t=>t.text+(t.done?'(完了)':'')).join('、')||'なし'}
-- 今日の予定: ${S.schedule.filter(s=>s.date===todayStr).map(s=>s.time+' '+s.name).join('、')||'なし'}
-- 習慣: ${S.habits.map(h=>h.name).join('、')||'なし'}
-- プロジェクト: ${S.projects.map(p=>p.name).join('、')||'なし'}
+【ユーザー一覧】${userListStr}
+【現在ログイン中】${cu.name}（id=${cu.id}）
+【他のユーザー】${otherUsers.map(u=>u.name+'(id='+u.id+')').join('、')||'なし'}
+
+【現在ユーザー＋共有の状況】
+- タスク: ${visT.map(t=>t.text+(t.done?'(完了)':'')+(t.userId==='shared'?'[共有]':'')).join('、')||'なし'}
+- 今日の予定: ${visS.filter(s=>s.date===todayStr).map(s=>s.time+' '+s.name+(s.userId==='shared'?'[共有]':'')).join('、')||'なし'}
+- 習慣: ${visH.map(h=>h.name).join('、')||'なし'}
+- プロジェクト: ${visP.map(p=>p.name).join('、')||'なし'}
 
 【重要：データ追加機能】
 ユーザーが何かを「追加して」「入れて」と頼んできたら、必ず通常の応答メッセージの後に、改行して以下の形式の純粋なJSONブロックを出力してください：
 
 \`\`\`actions
-[{"action":"add_schedule","date":"YYYY-MM-DD","time":"HH:MM","name":"予定名","memo":"メモ","color":"#b45a1e"}]
+[{"action":"add_schedule","date":"YYYY-MM-DD","time":"HH:MM","name":"予定名","memo":"メモ","color":"#b45a1e","userId":"shared"}]
 \`\`\`
 
 利用可能なアクション:
-- add_schedule: 予定追加 {date,time,name,memo,color}（colorは#b45a1e赤茶/#3c6446緑/#466496青/#785a28茶/#8b6496紫から1つ）
-- add_task: タスク追加 {text,badge,priority}（badge: work/study/habit、priority: high/mid/low）
-- add_habit: 習慣追加 {name}
-- add_memo: メモ追加 {title,body,type}（type: y黄/b青）
-- add_diary: 日記追加 {mood,text}（mood: 😊🔥😌😞💪🎉🤔😴）
-- add_project: プロジェクト追加 {name,tasks:["ミニタスク1",...]}
+- add_schedule: 予定追加 {date,time,name,memo,color,repeat,userId}（colorは#b45a1e赤茶/#3c6446緑/#466496青/#785a28茶/#8b6496紫、repeatはnone/daily/weekly/monthly）
+- add_task: タスク追加 {text,badge,priority,userId}（badge: work/study/habit、priority: high/mid/low）
+- add_habit: 習慣追加 {name,userId}
+- add_memo: メモ追加 {title,body,type,userId}（type: y黄/b青）
+- add_diary: 日記追加 {mood,text,userId}（mood: 😊🔥😌😞💪🎉🤔😴）
+- add_project: プロジェクト追加 {name,tasks:["ミニタスク1",...],userId}
+
+【userIdの判定ルール（重要）】
+- 「二人で」「一緒に」「デート」「私たち」「共有」「${otherUsers.map(u=>u.name).join('」「')}と」など、二人で共有すべき内容と判断したら必ず "userId": "shared" を指定
+- 「俺」「私」「自分」など現在ユーザーのみの内容なら "userId": ${cu.id}（または省略）
+- 「${otherUsers.map(u=>u.name).join('」「')}の予定/タスク」など他者個人のものなら、その人のid（例: "userId": ${otherUsers[0]?.id||2}）
+- 判別が曖昧な場合は現在ユーザー(${cu.id})にする
 
 ユーザーが具体的に頼まなければJSONブロックは出力しないこと。
 回答本文は簡潔に日本語で（200字以内が目安）。`;
@@ -1650,9 +1773,15 @@ function render(){
   const mel=document.getElementById('m-date');if(mel)mel.textContent=dateStr;
   const mtel=document.getElementById('m-task-date');if(mtel)mtel.textContent=dateStr;
 
-  // sidebar badge: count of undone tasks
+  // sidebar badge: count of undone tasks (visible items only)
   const tb=document.getElementById('task-badge-d');
-  if(tb){const u=S.tasks.filter(t=>!t.done).length;tb.textContent=u;tb.style.display=u===0?'none':'';}
+  if(tb){const u=visibleItems(S.tasks).filter(t=>!t.done).length;tb.textContent=u;tb.style.display=u===0?'none':'';}
+  // current user display
+  const cu=curUser();
+  const ava=document.getElementById('sb-ava-d'),uname=document.getElementById('sb-uname-d');
+  if(ava){ava.textContent=cu.initial;ava.style.background=cu.color;}
+  if(uname)uname.textContent=cu.name;
+  document.querySelectorAll('.m-hdr-ava').forEach(el=>{el.textContent=cu.initial;el.style.background=cu.color;});
 
   renderDSchedule();renderDCal();renderDTasksHome();renderDMetrics();
   renderDTasksFull();renderDHabits();renderDProjects();renderDDiary();renderDMemo();
@@ -1763,7 +1892,7 @@ function renderDCal(){calHTML('d-cal');calHTML('d-cal-full');}
 
 function renderDTasksHome(){
   const el=document.getElementById('d-tasks-home');if(!el)return;
-  const tasks=S.tasks.slice(0,5);
+  const tasks=visibleItems(S.tasks).slice(0,5);
   el.innerHTML=`<table><thead><tr><th style="width:24px"></th><th>タスク</th><th>カテゴリ</th><th>優先度</th><th style="width:32px"></th></tr></thead><tbody>
     ${tasks.length===0?'<tr><td colspan="5" style="text-align:center;color:var(--ink3);padding:18px">タスクはまだありません</td></tr>':tasks.map(t=>`<tr><td><div class="cb ${t.done?'done':''}" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></td>
     <td ${t.done?'style="text-decoration:line-through;color:var(--ink3)"':''}>${escapeHTML(t.text)}</td>
@@ -1774,25 +1903,27 @@ function renderDTasksHome(){
 
 function renderDMetrics(){
   const el=document.getElementById('d-metrics');if(!el)return;
-  const done=S.tasks.filter(t=>t.done).length;
-  const habDone=S.habits.filter(h=>h.days[new Date().getDay()]===1).length;
+  const visT=visibleItems(S.tasks),visH=visibleItems(S.habits),visP=visibleItems(S.projects),visM=visibleItems(S.memos);
+  const done=visT.filter(t=>t.done).length;
+  const habDone=visH.filter(h=>h.days[new Date().getDay()]===1).length;
   let projAvg=0;
-  if(S.projects.length>0){
-    const pcts=S.projects.map(p=>p.tasks.length===0?0:p.tasks.filter(t=>t.d).length/p.tasks.length*100);
+  if(visP.length>0){
+    const pcts=visP.map(p=>p.tasks.length===0?0:p.tasks.filter(t=>t.d).length/p.tasks.length*100);
     projAvg=Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length);
   }
   el.innerHTML=`
-    <div class="met"><div class="mv" style="color:var(--acc)">${done}/${S.tasks.length}</div><div class="ml">タスク完了</div></div>
-    <div class="met"><div class="mv" style="color:var(--acc3)">${habDone}/${S.habits.length}</div><div class="ml">今日の習慣</div></div>
+    <div class="met"><div class="mv" style="color:var(--acc)">${done}/${visT.length}</div><div class="ml">タスク完了</div></div>
+    <div class="met"><div class="mv" style="color:var(--acc3)">${habDone}/${visH.length}</div><div class="ml">今日の習慣</div></div>
     <div class="met"><div class="mv" style="color:var(--acc2)">${projAvg}%</div><div class="ml">PJ平均進捗</div></div>
-    <div class="met"><div class="mv" style="color:var(--acc4)">${S.memos.length}</div><div class="ml">メモ件数</div></div>`;
+    <div class="met"><div class="mv" style="color:var(--acc4)">${visM.length}</div><div class="ml">メモ件数</div></div>`;
 }
 
 function renderDTasksFull(){
   const el=document.getElementById('d-tasks-full');if(!el)return;
   preserveInpVal('d-task-inp',()=>{
-    const undone=S.tasks.filter(t=>!t.done);
-    const done=S.tasks.filter(t=>t.done);
+    const visT=visibleItems(S.tasks);
+    const undone=visT.filter(t=>!t.done);
+    const done=visT.filter(t=>t.done);
     const taskHTML=(t,isDone)=>{
       const isEditing=editing.kind==='task'&&editing.id===t.id;
       const textHTML=isEditing?editInpHTML(t.text):`<div style="font-size:13px;color:${isDone?'var(--ink3)':'var(--ink)'};${isDone?'text-decoration:line-through;':''}cursor:text" onclick="startEdit('task',${t.id})" title="クリックで編集">${escapeHTML(t.text)}</div>`;
@@ -1827,7 +1958,7 @@ function renderDHabits(){
   const el=document.getElementById('d-habits');if(!el)return;
   preserveInpVal('hb-name',()=>{
     const days=['日','月','火','水','木','金','土'];
-    const list=S.habits.map(h=>{
+    const list=visibleItems(S.habits).map(h=>{
       const streak=calcStreak(h);
       const streakHTML=streak>0?`<span style="font-size:11px;color:var(--acc);background:rgba(181,90,30,.1);padding:2px 7px;border-radius:10px;margin-left:8px;font-weight:500" title="連続${streak}日達成">🔥 ${streak}</span>`:'';
       const isEditing=editing.kind==='habit'&&editing.id===h.id;
@@ -1840,17 +1971,18 @@ function renderDHabits(){
       <input class="gform-inp" id="hb-name" type="text" placeholder="新しい習慣（例: 朝の散歩）" onkeydown="if(event.key==='Enter')addHabitFromForm()">
       <button class="gform-btn" onclick="addHabitFromForm()">＋ 追加</button>
     </div></div>
-    ${S.habits.length===0?'<div class="t-empty">習慣はまだありません</div>':list}`;
+    ${visibleItems(S.habits).length===0?'<div class="t-empty">習慣はまだありません</div>':list}`;
   });
 }
 
 function renderDProjects(){
   const el=document.getElementById('d-projects');if(!el)return;
   // preserve all project mini-task inputs and AI inputs across renders
+  const visProjects=visibleItems(S.projects);
   const ids=['pj-name'];
-  S.projects.forEach(p=>{ids.push('pj-mt-'+p.id,'pj-ai-inp-'+p.id);});
+  visProjects.forEach(p=>{ids.push('pj-mt-'+p.id,'pj-ai-inp-'+p.id);});
   preserveInpVals(ids,()=>{
-    const projHTML=S.projects.length===0?'<div class="t-empty">プロジェクトはまだありません</div>':S.projects.map(p=>{
+    const projHTML=visProjects.length===0?'<div class="t-empty">プロジェクトはまだありません</div>':visProjects.map(p=>{
       const pct=p.tasks.length===0?0:Math.round(p.tasks.filter(t=>t.d).length/p.tasks.length*100);
       return `<div class="pblk">
         <div class="phdr2"><span class="pt">${escapeHTML(p.name)}</span><span class="pp">${pct}%</span>
@@ -1890,7 +2022,7 @@ function renderDDiary(){
   preserveInpVal('dy-text',()=>{
     const moods=['😊','🔥','😌','😞','💪','🎉','🤔','😴'];
     const moodBtns=moods.map(m=>`<button class="mood-btn ${diaryForm.mood===m?'on':''}" onclick="setDiaryMood('${m}')">${m}</button>`).join('');
-    const list=S.diaries.map(d=>`
+    const list=visibleItems(S.diaries).map(d=>`
       <div class="dcrd-act"><div class="dmood">${d.mood}</div>
       <div style="flex:1"><div class="ddate">${escapeHTML(d.date)}</div><div class="dtext">${escapeHTML(d.text).replace(/\n/g,'<br>')}</div></div>
       <button class="tdel" onclick="deleteDiary(${d.id})" title="削除">✕</button></div>`).join('');
@@ -1902,14 +2034,14 @@ function renderDDiary(){
           <button class="gform-btn" onclick="addDiaryFromForm()">＋ 投稿</button>
         </div>
       </div>
-      ${S.diaries.length===0?'<div class="t-empty">日記はまだありません</div>':list}`;
+      ${visibleItems(S.diaries).length===0?'<div class="t-empty">日記はまだありません</div>':list}`;
   });
 }
 
 function renderDMemo(){
   const el=document.getElementById('d-memo');if(!el)return;
   preserveInpVals(['mm-title','mm-body'],()=>{
-    const list=S.memos.map(m=>`
+    const list=visibleItems(S.memos).map(m=>`
       <div class="mcrd mcrd-act ${m.type==='b'?'mb':''}">
         <div class="mt2">${escapeHTML(m.title)}</div><div class="mb2">${escapeHTML(m.body).replace(/\n/g,'<br>')}</div><div class="mdate">${escapeHTML(m.date)}</div>
         <button class="tdel" onclick="deleteMemo(${m.id})" title="削除">✕</button>
@@ -1925,17 +2057,18 @@ function renderDMemo(){
           <button class="gform-btn" onclick="addMemoFromForm()" style="margin-left:auto">＋ 追加</button>
         </div>
       </div>
-      ${S.memos.length===0?'<div class="t-empty">メモはまだありません</div>':list}`;
+      ${visibleItems(S.memos).length===0?'<div class="t-empty">メモはまだありません</div>':list}`;
   });
 }
 
 // MOBILE RENDERS
 function renderMTasksCard(){
   const el=document.getElementById('m-tasks-card');if(!el)return;
-  el.innerHTML=`<div class="m-card-hdr"><span class="m-card-ttl">今日のタスク</span><span class="m-card-badge">${S.tasks.length}件</span></div>
-    ${S.tasks.length===0?'<div style="padding:18px;text-align:center;font-size:11.5px;color:var(--ink3)">タスクはまだありません<br><span style="font-size:10.5px">下のタブから「タスク」を選んで追加できます</span></div>':S.tasks.map(t=>`<div class="m-task-row">
+  const tks=visibleItems(S.tasks);
+  el.innerHTML=`<div class="m-card-hdr"><span class="m-card-ttl">今日のタスク</span><span class="m-card-badge">${tks.length}件</span></div>
+    ${tks.length===0?'<div style="padding:18px;text-align:center;font-size:11.5px;color:var(--ink3)">タスクはまだありません<br><span style="font-size:10.5px">下のタブから「タスク」を選んで追加できます</span></div>':tks.map(t=>`<div class="m-task-row">
       <div class="m-cb ${t.done?'done':''}" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div style="flex:1"><div class="m-tname ${t.done?'done':''}">${escapeHTML(t.text)}</div>${mTagHTML(t.badge)}</div>
+      <div style="flex:1"><div class="m-tname ${t.done?'done':''}">${escapeHTML(t.text)}${t.userId==='shared'?' <span style="font-size:9px;color:var(--ink3)" title="共有">👥</span>':showAllUsers()&&t.userId!==S.currentUserId?` <span style="font-size:9px;color:${userColor(t.userId)}">●${escapeHTML(userLabel(t.userId))}</span>`:''}</div>${mTagHTML(t.badge)}</div>
       <button class="tdel-tbl" onclick="event.stopPropagation();deleteTask(${t.id})" title="削除">✕</button>
     </div>`).join('')}`;
 }
@@ -1995,8 +2128,9 @@ function renderMCal(){
 function renderMTaskFull(){
   const el=document.getElementById('m-task-content');if(!el)return;
   preserveInpVal('m-task-inp',()=>{
-    const undone=S.tasks.filter(t=>!t.done);
-    const done=S.tasks.filter(t=>t.done);
+    const visT=visibleItems(S.tasks);
+    const undone=visT.filter(t=>!t.done);
+    const done=visT.filter(t=>t.done);
     const tHTML=(t,isDone)=>{
       const isEditing=editing.kind==='task'&&editing.id===t.id;
       const nameHTML=isEditing?editInpHTML(t.text):`<div class="m-ti-name${isDone?' done':''}" onclick="startEdit('task',${t.id})" style="cursor:text">${escapeHTML(t.text)}</div>`;
@@ -2170,11 +2304,11 @@ function renderSearchResults(){
   const q=(inp?inp.value:'').trim().toLowerCase();
   if(!q){out.innerHTML='<div class="t-empty">キーワードを入力してください</div>';return;}
   const matches={tasks:[],schedule:[],memos:[],diaries:[],projects:[]};
-  S.tasks.forEach(t=>{if((t.text||'').toLowerCase().includes(q))matches.tasks.push(t);});
-  S.schedule.forEach(s=>{if(((s.name||'')+(s.memo||'')).toLowerCase().includes(q))matches.schedule.push(s);});
-  S.memos.forEach(m=>{if(((m.title||'')+(m.body||'')).toLowerCase().includes(q))matches.memos.push(m);});
-  S.diaries.forEach(d=>{if((d.text||'').toLowerCase().includes(q))matches.diaries.push(d);});
-  S.projects.forEach(p=>{
+  visibleItems(S.tasks).forEach(t=>{if((t.text||'').toLowerCase().includes(q))matches.tasks.push(t);});
+  visibleItems(S.schedule).forEach(s=>{if(((s.name||'')+(s.memo||'')).toLowerCase().includes(q))matches.schedule.push(s);});
+  visibleItems(S.memos).forEach(m=>{if(((m.title||'')+(m.body||'')).toLowerCase().includes(q))matches.memos.push(m);});
+  visibleItems(S.diaries).forEach(d=>{if((d.text||'').toLowerCase().includes(q))matches.diaries.push(d);});
+  visibleItems(S.projects).forEach(p=>{
     if((p.name||'').toLowerCase().includes(q)){matches.projects.push({proj:p,kind:'project'});return;}
     p.tasks.forEach((t,i)=>{if((t.t||'').toLowerCase().includes(q))matches.projects.push({proj:p,kind:'minitask',mini:t,idx:i});});
   });
@@ -2274,7 +2408,7 @@ async function forceUpdate(){
   window.location.reload(true);
 }
 init();
-// build: full v22 (ダーク/ストリーク/音声/削除確認/繰返/通知)
+// build: full v23 (マルチユーザー対応・AI共有判定)
 </script>
 </body>
 </html>
