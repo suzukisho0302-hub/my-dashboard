@@ -625,6 +625,10 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
         <svg class="ni-ic" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         <span class="ni-lbl">メモ</span>
       </div>
+      <div class="ni" onclick="goPage('search',this)">
+        <svg class="ni-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span class="ni-lbl">検索</span>
+      </div>
       <div class="sb-sec">設定</div>
       <div class="ni" onclick="openModal('sb-modal')">
         <svg class="ni-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -637,6 +641,14 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
       <div class="ni" onclick="forceUpdate()">
         <svg class="ni-ic" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         <span class="ni-lbl">アプリを更新</span>
+      </div>
+      <div class="ni" onclick="exportData()">
+        <svg class="ni-ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="ni-lbl">データを書き出し</span>
+      </div>
+      <div class="ni" onclick="importData()">
+        <svg class="ni-ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span class="ni-lbl">データを読み込み</span>
       </div>
     </nav>
     <div class="sb-bot">
@@ -735,6 +747,14 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
       <div id="d-projects"></div>
     </div>
 
+    <!-- SEARCH -->
+    <div id="page-search" class="page">
+      <div class="page-title">横断検索</div>
+      <div class="page-sub">タスク・予定・メモ・日記・プロジェクトを一括検索</div>
+      <input type="text" id="search-inp" class="gform-inp" placeholder="キーワードを入力..." style="width:100%;margin-bottom:14px;font-size:14px" oninput="renderSearchResults()" onkeydown="if(event.key==='Escape')document.getElementById('search-inp').value=''">
+      <div id="search-results"></div>
+    </div>
+
   </div>
 
   <!-- RIGHT AI PANEL -->
@@ -751,9 +771,10 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
     </div>
     <div class="ai-quick-wrap">
       <div class="ai-qlbl">クイック操作</div>
-      <button class="aq-btn" onclick="sendQuick('今日のタスクを整理して')">今日のタスクを整理して</button>
-      <button class="aq-btn" onclick="sendQuick('今週の進捗をまとめて')">今週の進捗をまとめて</button>
-      <button class="aq-btn" onclick="sendQuick('新しいタスクを追加して')">新しいタスクを追加して</button>
+      <button class="aq-btn" onclick="sendQuick('今日のタスクを優先順位順に並べて、最初に取り組むべきものを教えて')">📋 今日のタスクを優先順位順に</button>
+      <button class="aq-btn" onclick="sendQuick('今週の振り返りをして。完了したタスク・未完了・改善点をまとめて')">🔍 今週の振り返り</button>
+      <button class="aq-btn" onclick="sendQuick('今日の予定とタスクから明日の準備事項を提案して')">📅 明日の準備</button>
+      <button class="aq-btn" onclick="sendQuick('習慣の達成状況を分析して、続けるためのアドバイスをちょうだい')">🔁 習慣をチェック</button>
     </div>
     <div class="ai-inp-wrap">
       <textarea class="ai-inp" id="d-ai-inp" placeholder="メッセージを入力..." rows="2" onkeydown="aiKey(event,'d')"></textarea>
@@ -840,9 +861,10 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
     <div class="asm bot"><div class="asm-bubble">こんにちは！タスクの追加や相談など、何でも聞いてください。</div></div>
   </div>
   <div class="ai-sheet-quick">
-    <button class="asq-btn" onclick="sendQuick('今日のタスクを整理して')">タスクを整理</button>
-    <button class="asq-btn" onclick="sendQuick('今週の進捗は？')">進捗確認</button>
-    <button class="asq-btn" onclick="sendQuick('予定を追加して')">予定追加</button>
+    <button class="asq-btn" onclick="sendQuickM('今日のタスクを優先順位順に並べて')">📋 タスク優先順</button>
+    <button class="asq-btn" onclick="sendQuickM('今週の振り返りをして')">🔍 週の振り返り</button>
+    <button class="asq-btn" onclick="sendQuickM('明日の準備事項を教えて')">📅 明日の準備</button>
+    <button class="asq-btn" onclick="sendQuickM('習慣の達成状況を分析して')">🔁 習慣チェック</button>
   </div>
   <div class="ai-sheet-inp">
     <input class="ai-sheet-input" id="m-ai-inp" placeholder="メッセージを入力..." onkeydown="if(event.key==='Enter')sendAI('m')">
@@ -883,6 +905,7 @@ let S = {
 let sbClient = null;
 let aiHist = [];
 let curMTab = 0;
+let calViewYM = (function(){const d=new Date();return {y:d.getFullYear(),m:d.getMonth()};})(); // 表示中の年月
 
 // ===== SUPABASE =====
 function initSb(url,key){
@@ -906,6 +929,35 @@ async function syncFrom(){if(!sbClient)return;try{const{data}=await sbClient.fro
 function save(){localStorage.setItem(LSKEY,JSON.stringify(S));syncTo();}
 function load(){try{const d=localStorage.getItem(LSKEY);if(d)S={...S,...JSON.parse(d)};}catch(e){}}
 // migrate() is called after load() in init()
+
+// ===== EDIT STATE =====
+let editing={kind:null,id:null}; // {kind:'task'|'sched'|'habit'|'memo'|'diary'|'project'|'minitask',id,extra?}
+function startEdit(kind,id,extra){editing={kind,id,extra};render();setTimeout(()=>{const inp=document.querySelector('.edit-inp');if(inp){inp.focus();inp.select?.();}},20);}
+function cancelEdit(){editing={kind:null,id:null};render();}
+function commitEdit(newVal){
+  const k=editing.kind,id=editing.id;
+  if(!k)return;
+  const v=String(newVal||'').trim();
+  if(!v){cancelEdit();return;}
+  if(k==='task'){const t=S.tasks.find(x=>x.id===id);if(t)t.text=v;}
+  else if(k==='sched'){const s=S.schedule.find(x=>x.id===id);if(s)s.name=v;}
+  else if(k==='habit'){const h=S.habits.find(x=>x.id===id);if(h)h.name=v;}
+  else if(k==='memo-title'){const m=S.memos.find(x=>x.id===id);if(m)m.title=v;}
+  else if(k==='memo-body'){const m=S.memos.find(x=>x.id===id);if(m)m.body=v;}
+  else if(k==='diary'){const d=S.diaries.find(x=>x.id===id);if(d)d.text=v;}
+  else if(k==='project'){const p=S.projects.find(x=>x.id===id);if(p)p.name=v;}
+  else if(k==='minitask'){const p=S.projects.find(x=>x.id===editing.extra?.projId);if(p&&p.tasks[editing.extra?.idx])p.tasks[editing.extra.idx].t=v;}
+  editing={kind:null,id:null};
+  save();render();
+}
+function editKey(e){
+  if(e.key==='Enter'){e.preventDefault();commitEdit(e.target.value);}
+  else if(e.key==='Escape'){e.preventDefault();cancelEdit();}
+}
+function editBlur(e){commitEdit(e.target.value);}
+function editInpHTML(currentVal){
+  return `<input class="edit-inp" type="text" value="${escapeHTML(currentVal)}" onkeydown="editKey(event)" onblur="editBlur(event)" style="flex:1;min-width:0;font-size:14px;padding:4px 6px;border:1.5px solid var(--acc);border-radius:5px;background:#fff;color:var(--ink);font-family:inherit;outline:none">`;
+}
 
 // ===== TASK CRUD =====
 const BADGES=[['work','仕事'],['study','研修'],['habit','習慣']];
@@ -1491,6 +1543,10 @@ function sendQuick(text){
   const inp=document.getElementById('d-ai-inp');
   inp.value=text;sendAI('d');
 }
+function sendQuickM(text){
+  const inp=document.getElementById('m-ai-inp');
+  inp.value=text;sendAI('m');
+}
 
 // ===== RENDER =====
 function render(){
@@ -1508,6 +1564,10 @@ function render(){
   renderDSchedule();renderDCal();renderDTasksHome();renderDMetrics();
   renderDTasksFull();renderDHabits();renderDProjects();renderDDiary();renderDMemo();
   renderMTasksCard();renderMSched();renderMCal();renderMTaskFull();
+  // 検索ページがアクティブの時だけ再描画（入力中の値は preserve）
+  if(document.getElementById('page-search')?.classList.contains('active')){
+    preserveInpVal('search-inp',()=>renderSearchResults());
+  }
 }
 
 function escapeHTML(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -1546,26 +1606,40 @@ function schFormHTML(p){
 function renderDSchedule(){
   const el=document.getElementById('d-schedule');if(!el)return;
   const todayStr=todayYMD();
+  const schNameCell=(s)=>{
+    const isEditing=editing.kind==='sched'&&editing.id===s.id;
+    const inner=isEditing?editInpHTML(s.name):`<span onclick="startEdit('sched',${s.id})" style="cursor:text">${escapeHTML(s.name)}</span>`;
+    return `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px"></span>${inner}`;
+  };
   const today=S.schedule.filter(s=>s.date===todayStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   const tableHTML=`<table><thead><tr><th style="width:70px">時間</th><th>予定</th><th>メモ</th><th style="width:32px"></th></tr></thead><tbody>
-    ${today.length===0?'<tr><td colspan="4" style="text-align:center;color:var(--ink3);padding:14px">本日の予定はまだありません</td></tr>':today.map(s=>`<tr><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.time)}</td><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px"></span>${escapeHTML(s.name)}</td><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.memo||'-')}</td><td><button class="tdel-tbl" onclick="deleteSchedule(${s.id})" title="削除">✕</button></td></tr>`).join('')}
+    ${today.length===0?'<tr><td colspan="4" style="text-align:center;color:var(--ink3);padding:14px">本日の予定はまだありません</td></tr>':today.map(s=>`<tr><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.time)}</td><td>${schNameCell(s)}</td><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.memo||'-')}</td><td><button class="tdel-tbl" onclick="deleteSchedule(${s.id})" title="削除">✕</button></td></tr>`).join('')}
   </tbody></table>`;
   el.innerHTML=tableHTML;
-  // schedule full page (under calendar) — also include inline form + all upcoming events list
   const el2=document.getElementById('d-schedule-full');
   if(el2){
     preserveInpVals(['sch-time-d','sch-date-d','sch-name-d','sch-memo-d'],()=>{
       const upcoming=[...S.schedule].sort((a,b)=>(a.date+' '+a.time).localeCompare(b.date+' '+b.time));
       el2.innerHTML=schFormHTML('d')+tableHTML+`
         <div style="margin-top:18px;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">すべての予定 · ${upcoming.length}件</div>
-        ${upcoming.length===0?'<div class="t-empty">予定はまだありません</div>':`<div class="tbl-wrap"><table><thead><tr><th>日付</th><th style="width:60px">時間</th><th>予定</th><th>メモ</th><th style="width:32px"></th></tr></thead><tbody>${upcoming.map(s=>`<tr><td style="color:var(--ink3);font-size:11px">${escapeHTML(fmtDateJP(s.date||todayStr))}</td><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.time)}</td><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px"></span>${escapeHTML(s.name)}</td><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.memo||'-')}</td><td><button class="tdel-tbl" onclick="deleteSchedule(${s.id})" title="削除">✕</button></td></tr>`).join('')}</tbody></table></div>`}`;
+        ${upcoming.length===0?'<div class="t-empty">予定はまだありません</div>':`<div class="tbl-wrap"><table><thead><tr><th>日付</th><th style="width:60px">時間</th><th>予定</th><th>メモ</th><th style="width:32px"></th></tr></thead><tbody>${upcoming.map(s=>`<tr><td style="color:var(--ink3);font-size:11px">${escapeHTML(fmtDateJP(s.date||todayStr))}</td><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.time)}</td><td>${schNameCell(s)}</td><td style="color:var(--ink3);font-size:11px">${escapeHTML(s.memo||'-')}</td><td><button class="tdel-tbl" onclick="deleteSchedule(${s.id})" title="削除">✕</button></td></tr>`).join('')}</tbody></table></div>`}`;
     });
   }
 }
 
+function calNav(delta){
+  if(delta===0){const d=new Date();calViewYM={y:d.getFullYear(),m:d.getMonth()};}
+  else{
+    let m=calViewYM.m+delta,y=calViewYM.y;
+    while(m<0){m+=12;y--;}
+    while(m>11){m-=12;y++;}
+    calViewYM={y,m};
+  }
+  render();
+}
 function calHTML(elId){
-  const d=new Date();
-  const year=d.getFullYear(),month=d.getMonth();
+  const today=new Date();
+  const year=calViewYM.y,month=calViewYM.m;
   const first=new Date(year,month,1).getDay();
   const last=new Date(year,month+1,0).getDate();
   const prevLast=new Date(year,month,0).getDate();
@@ -1573,19 +1647,18 @@ function calHTML(elId){
   ['日','月','火','水','木','金','土'].forEach((l,i)=>{
     cells+=`<div class="cal-lbl" ${i===0?'style="color:var(--acc)"':i===6?'style="color:var(--acc4)"':''}>${l}</div>`;
   });
-  // events per ymd
   const eventDates=new Set(S.schedule.map(s=>s.date).filter(Boolean));
   for(let i=0;i<first;i++) cells+=`<div class="cal-day other">${prevLast-first+i+1}</div>`;
   for(let i=1;i<=last;i++){
     const ymdStr=`${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-    const isToday=i===d.getDate();
+    const isToday=(i===today.getDate() && month===today.getMonth() && year===today.getFullYear());
     const hasEv=eventDates.has(ymdStr);
     cells+=`<div class="cal-day${isToday?' today':''}${hasEv?' has-ev':''}" onclick="openEventModal('${ymdStr}')">${i}${hasEv?'<div class="ev-dot"></div>':''}</div>`;
   }
   const total=first+last;const remaining=(7-total%7)%7;
   for(let i=1;i<=remaining;i++) cells+=`<div class="cal-day other">${i}</div>`;
   const el=document.getElementById(elId);if(!el)return;
-  el.innerHTML=`<div class="cal-nav"><button class="cal-btn">‹</button><span class="cal-month">${year}年 ${month+1}月</span><button class="cal-btn">›</button></div><div class="cal-grid">${cells}</div>`;
+  el.innerHTML=`<div class="cal-nav"><button class="cal-btn" onclick="calNav(-1)">‹</button><span class="cal-month" style="cursor:pointer" onclick="calNav(0)" title="今日へ">${year}年 ${month+1}月</span><button class="cal-btn" onclick="calNav(1)">›</button></div><div class="cal-grid">${cells}</div>`;
 }
 
 function renderDCal(){calHTML('d-cal');calHTML('d-cal-full');}
@@ -1622,20 +1695,21 @@ function renderDTasksFull(){
   preserveInpVal('d-task-inp',()=>{
     const undone=S.tasks.filter(t=>!t.done);
     const done=S.tasks.filter(t=>t.done);
+    const taskHTML=(t,isDone)=>{
+      const isEditing=editing.kind==='task'&&editing.id===t.id;
+      const textHTML=isEditing?editInpHTML(t.text):`<div style="font-size:13px;color:${isDone?'var(--ink3)':'var(--ink)'};${isDone?'text-decoration:line-through;':''}cursor:text" onclick="startEdit('task',${t.id})" title="クリックで編集">${escapeHTML(t.text)}</div>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px${isDone?';opacity:.65':''}">
+        <div class="cb${isDone?' done':''}" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1;min-width:0">${textHTML}${!isDone?`<div style="margin-top:3px;display:flex;gap:5px">${tagHTML(t.badge)}${prHTML(t.priority)}</div>`:''}</div>
+        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
+      </div>`;
+    };
     el.innerHTML=`
       ${taskFormHTML('d')}
       <div style="font-size:10px;color:var(--ink3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">未完了 · ${undone.length}件</div>
-      ${undone.length===0?'<div class="t-empty">未完了のタスクはありません 🎉</div>':undone.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px">
-        <div class="cb" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div style="flex:1"><div style="font-size:13px;color:var(--ink)">${escapeHTML(t.text)}</div><div style="margin-top:3px;display:flex;gap:5px">${tagHTML(t.badge)}${prHTML(t.priority)}</div></div>
-        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
-      </div>`).join('')}
+      ${undone.length===0?'<div class="t-empty">未完了のタスクはありません 🎉</div>':undone.map(t=>taskHTML(t,false)).join('')}
       <div style="font-size:10px;color:var(--ink3);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.5px">完了済み · ${done.length}件</div>
-      ${done.length===0?'<div class="t-empty">完了済みのタスクはまだありません</div>':done.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px;opacity:.65">
-        <div class="cb done" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div style="flex:1;font-size:13px;color:var(--ink3);text-decoration:line-through">${escapeHTML(t.text)}</div>
-        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
-      </div>`).join('')}`;
+      ${done.length===0?'<div class="t-empty">完了済みのタスクはまだありません</div>':done.map(t=>taskHTML(t,true)).join('')}`;
   });
 }
 
@@ -1770,8 +1844,8 @@ function renderMSched(){
 
 function renderMCal(){
   const el=document.getElementById('m-cal');if(!el)return;
-  const d=new Date();
-  const year=d.getFullYear(),month=d.getMonth();
+  const today=new Date();
+  const year=calViewYM.y,month=calViewYM.m;
   const first=new Date(year,month,1).getDay();
   const last=new Date(year,month+1,0).getDate();
   const prevLast=new Date(year,month,0).getDate();
@@ -1783,7 +1857,7 @@ function renderMCal(){
   for(let i=0;i<first;i++) cells+=`<div class="m-cal-day other">${prevLast-first+i+1}</div>`;
   for(let i=1;i<=last;i++){
     const ymdStr=`${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-    const isToday=i===d.getDate();
+    const isToday=(i===today.getDate() && month===today.getMonth() && year===today.getFullYear());
     const hasEv=eventDates.has(ymdStr);
     cells+=`<div class="m-cal-day${isToday?' today':''}${hasEv?' has-ev':''}" onclick="openEventModal('${ymdStr}')">${i}${hasEv?'<div class="m-ev-dot"></div>':''}</div>`;
   }
@@ -1792,10 +1866,10 @@ function renderMCal(){
   const todayStr=todayYMD();
   const todayEvs=S.schedule.filter(s=>s.date===todayStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   el.innerHTML=`
-    <div class="m-cal-nav"><button class="m-cal-btn">‹</button><span class="m-cal-month">${year}年 ${month+1}月</span><button class="m-cal-btn">›</button></div>
+    <div class="m-cal-nav"><button class="m-cal-btn" onclick="calNav(-1)">‹</button><span class="m-cal-month" style="cursor:pointer" onclick="calNav(0)" title="今日">${year}年 ${month+1}月</span><button class="m-cal-btn" onclick="calNav(1)">›</button></div>
     <div class="m-cal-grid">${cells}</div>
     <div class="m-cal-events">
-      <div style="font-size:10.5px;font-weight:500;color:var(--ink);margin:10px 0 6px">${d.getDate()}日の予定</div>
+      <div style="font-size:10.5px;font-weight:500;color:var(--ink);margin:10px 0 6px">${today.getDate()}日の予定</div>
       ${todayEvs.length===0?'<div style="font-size:11px;color:var(--ink3);padding:4px 0">予定なし</div>':todayEvs.map(s=>`<div class="m-cev"><div class="m-cev-dot" style="background:${s.color}"></div><div class="m-cev-name">${escapeHTML(s.name)}</div><div class="m-cev-time">${escapeHTML(s.time)}</div></div>`).join('')}
       <button class="m-add-btn" style="margin-top:8px;padding:9px;font-size:12px" onclick="openEventModal('${todayStr}')">＋ 今日の予定を追加</button>
     </div>`;
@@ -1806,21 +1880,21 @@ function renderMTaskFull(){
   preserveInpVal('m-task-inp',()=>{
     const undone=S.tasks.filter(t=>!t.done);
     const done=S.tasks.filter(t=>t.done);
+    const tHTML=(t,isDone)=>{
+      const isEditing=editing.kind==='task'&&editing.id===t.id;
+      const nameHTML=isEditing?editInpHTML(t.text):`<div class="m-ti-name${isDone?' done':''}" onclick="startEdit('task',${t.id})" style="cursor:text">${escapeHTML(t.text)}</div>`;
+      return `<div class="m-task-item"${isDone?' style="opacity:.65"':''}>
+        <div class="m-ti-chk${isDone?' done':''}" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1;min-width:0">${nameHTML}${!isDone?`<div class="m-ti-meta">${mTagHTML(t.badge)}<span class="tag m-pr-${t.priority}" style="font-size:9px;padding:1px 6px;border-radius:6px">${t.priority==='high'?'高':t.priority==='mid'?'中':'低'}</span></div>`:''}</div>
+        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
+      </div>`;
+    };
     el.innerHTML=`
       ${taskFormHTML('m')}
       <div class="m-task-sec">未完了 · ${undone.length}件</div>
-      ${undone.length===0?'<div class="t-empty">未完了のタスクはありません 🎉</div>':undone.map(t=>`<div class="m-task-item">
-        <div class="m-ti-chk" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div style="flex:1;min-width:0"><div class="m-ti-name">${escapeHTML(t.text)}</div>
-        <div class="m-ti-meta">${mTagHTML(t.badge)}<span class="tag m-pr-${t.priority}" style="font-size:9px;padding:1px 6px;border-radius:6px">${t.priority==='high'?'高':t.priority==='mid'?'中':'低'}</span></div></div>
-        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
-      </div>`).join('')}
+      ${undone.length===0?'<div class="t-empty">未完了のタスクはありません 🎉</div>':undone.map(t=>tHTML(t,false)).join('')}
       <div class="m-task-sec" style="margin-top:16px">完了済み · ${done.length}件</div>
-      ${done.length===0?'<div class="t-empty">完了済みのタスクはまだありません</div>':done.map(t=>`<div class="m-task-item" style="opacity:.65">
-        <div class="m-ti-chk done" onclick="toggleTask(${t.id})"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="m-ti-name done" style="flex:1;min-width:0">${escapeHTML(t.text)}</div>
-        <button class="tdel" onclick="deleteTask(${t.id})" title="削除">✕</button>
-      </div>`).join('')}`;
+      ${done.length===0?'<div class="t-empty">完了済みのタスクはまだありません</div>':done.map(t=>tHTML(t,true)).join('')}`;
   });
 }
 
@@ -1882,6 +1956,102 @@ function applyUpdate(){
   else if(navigator.serviceWorker.waiting){navigator.serviceWorker.waiting.postMessage('SKIP_WAITING');}
   else{window.location.reload();}
 }
+// ===== 検索 =====
+function renderSearchResults(){
+  const inp=document.getElementById('search-inp');
+  const out=document.getElementById('search-results');
+  if(!out)return;
+  const q=(inp?inp.value:'').trim().toLowerCase();
+  if(!q){out.innerHTML='<div class="t-empty">キーワードを入力してください</div>';return;}
+  const matches={tasks:[],schedule:[],memos:[],diaries:[],projects:[]};
+  S.tasks.forEach(t=>{if((t.text||'').toLowerCase().includes(q))matches.tasks.push(t);});
+  S.schedule.forEach(s=>{if(((s.name||'')+(s.memo||'')).toLowerCase().includes(q))matches.schedule.push(s);});
+  S.memos.forEach(m=>{if(((m.title||'')+(m.body||'')).toLowerCase().includes(q))matches.memos.push(m);});
+  S.diaries.forEach(d=>{if((d.text||'').toLowerCase().includes(q))matches.diaries.push(d);});
+  S.projects.forEach(p=>{
+    if((p.name||'').toLowerCase().includes(q)){matches.projects.push({proj:p,kind:'project'});return;}
+    p.tasks.forEach((t,i)=>{if((t.t||'').toLowerCase().includes(q))matches.projects.push({proj:p,kind:'minitask',mini:t,idx:i});});
+  });
+  const total=matches.tasks.length+matches.schedule.length+matches.memos.length+matches.diaries.length+matches.projects.length;
+  if(total===0){out.innerHTML='<div class="t-empty">該当する項目はありません</div>';return;}
+  const hl=(s)=>{
+    const lower=s.toLowerCase(),idx=lower.indexOf(q);
+    if(idx<0)return escapeHTML(s);
+    return escapeHTML(s.slice(0,idx))+'<mark style="background:rgba(181,90,30,.2);color:var(--acc);padding:1px 2px;border-radius:2px">'+escapeHTML(s.slice(idx,idx+q.length))+'</mark>'+escapeHTML(s.slice(idx+q.length));
+  };
+  let html=`<div style="font-size:11px;color:var(--ink3);margin-bottom:10px">${total}件ヒット</div>`;
+  if(matches.tasks.length){
+    html+=`<div style="font-size:10px;color:var(--ink3);margin:14px 0 6px;text-transform:uppercase">タスク · ${matches.tasks.length}件</div>`;
+    html+=matches.tasks.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:5px;cursor:pointer" onclick="goPage('tasks',null)">
+      <div class="cb${t.done?' done':''}"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div style="flex:1;font-size:13px;${t.done?'text-decoration:line-through;color:var(--ink3);':''}">${hl(t.text)}</div>
+      ${tagHTML(t.badge)}
+    </div>`).join('');
+  }
+  if(matches.schedule.length){
+    html+=`<div style="font-size:10px;color:var(--ink3);margin:14px 0 6px;text-transform:uppercase">予定 · ${matches.schedule.length}件</div>`;
+    html+=matches.schedule.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:5px;cursor:pointer" onclick="openEventModal('${s.date}')">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0"></span>
+      <span style="font-size:11px;color:var(--ink3);width:90px;flex-shrink:0">${escapeHTML(fmtDateJP(s.date))} ${escapeHTML(s.time)}</span>
+      <span style="flex:1;font-size:13px">${hl(s.name)}</span>
+    </div>`).join('');
+  }
+  if(matches.memos.length){
+    html+=`<div style="font-size:10px;color:var(--ink3);margin:14px 0 6px;text-transform:uppercase">メモ · ${matches.memos.length}件</div>`;
+    html+=matches.memos.map(m=>`<div class="mcrd ${m.type==='b'?'mb':''}" style="cursor:pointer" onclick="goPage('memo',null)">
+      <div class="mt2">${hl(m.title)}</div><div class="mb2">${hl((m.body||'').slice(0,140))}</div><div class="mdate">${escapeHTML(m.date)}</div>
+    </div>`).join('');
+  }
+  if(matches.diaries.length){
+    html+=`<div style="font-size:10px;color:var(--ink3);margin:14px 0 6px;text-transform:uppercase">日記 · ${matches.diaries.length}件</div>`;
+    html+=matches.diaries.map(d=>`<div class="dcrd-act" style="cursor:pointer" onclick="goPage('diary',null)">
+      <div class="dmood">${d.mood}</div>
+      <div style="flex:1"><div class="ddate">${escapeHTML(d.date)}</div><div class="dtext">${hl(d.text)}</div></div>
+    </div>`).join('');
+  }
+  if(matches.projects.length){
+    html+=`<div style="font-size:10px;color:var(--ink3);margin:14px 0 6px;text-transform:uppercase">プロジェクト · ${matches.projects.length}件</div>`;
+    html+=matches.projects.map(r=>`<div style="padding:10px 12px;background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:5px;cursor:pointer" onclick="goPage('proj-detail',null)">
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:2px">${escapeHTML(r.proj.name)}</div>
+      <div style="font-size:13px">${r.kind==='project'?hl(r.proj.name):hl(r.mini.t)}</div>
+    </div>`).join('');
+  }
+  out.innerHTML=html;
+}
+
+// ===== データのエクスポート / インポート =====
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const d=new Date();
+  const name=`sho-dashboard-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}.json`;
+  const a=document.createElement('a');
+  a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function importData(){
+  const input=document.createElement('input');
+  input.type='file';input.accept='.json,application/json';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(typeof data!=='object'||!data)throw new Error('不正なデータ');
+        const cnt=`タスク:${(data.tasks||[]).length}、予定:${(data.schedule||[]).length}、習慣:${(data.habits||[]).length}、メモ:${(data.memos||[]).length}、日記:${(data.diaries||[]).length}、プロジェクト:${(data.projects||[]).length}`;
+        if(!confirm(`このデータをインポートしますか？\n\n${cnt}\n\n※既存データは全て上書きされます`))return;
+        S={...S,...data};
+        migrate();save();render();
+        alert('インポート完了');
+      }catch(err){alert('読み込みエラー: '+err.message);}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 // 設定メニュー用：強制更新（キャッシュ全削除＋再取得）
 async function forceUpdate(){
   if(!confirm('アプリを最新版に強制更新しますか？\n（数秒かかります）'))return;
@@ -1898,7 +2068,7 @@ async function forceUpdate(){
   window.location.reload(true);
 }
 init();
-// build: full v20 (バナー消えるバグ修正＋送信ボタンが切れない設定)
+// build: full v21 (月送り・編集・AIクイック・エクスポート/インポート・検索)
 </script>
 </body>
 </html>
