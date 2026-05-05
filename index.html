@@ -541,8 +541,12 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
       <input type="hidden" id="user-color" data-color="#8b6496">
       <button class="modal-btn primary" onclick="addUserFromForm()" style="width:100%">＋ ユーザーを追加</button>
     </div>
-    <div class="modal-actions" style="margin-top:14px;border-top:1px solid var(--bd);padding-top:12px">
-      <button class="modal-btn" onclick="toggleShowAllUsers()">表示モード切替</button>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+      <button class="modal-btn" id="show-all-btn" onclick="toggleShowAllUsers();openUserModal();" style="width:100%">⚪ 自分＋共有のみ表示中</button>
+      <p style="font-size:10.5px;color:var(--ink3);margin-top:6px;line-height:1.5">押すと全員のタスク・予定が見えるモードに切替（彼女のものも見たいときに）</p>
+    </div>
+    <div class="modal-actions" style="margin-top:10px">
+      <button class="modal-btn" onclick="manualSync();closeModal('user-modal');">クラウド同期</button>
       <button class="modal-btn" onclick="closeModal('user-modal')">閉じる</button>
     </div>
   </div>
@@ -674,6 +678,10 @@ tbody tr:hover td{background:rgba(0,0,0,.01)}
       <div class="ni" onclick="forceUpdate()">
         <svg class="ni-ic" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
         <span class="ni-lbl">アプリを更新</span>
+      </div>
+      <div class="ni" onclick="manualSync()">
+        <svg class="ni-ic" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+        <span class="ni-lbl">クラウド同期</span>
       </div>
       <div class="ni" onclick="exportData()">
         <svg class="ni-ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -963,7 +971,7 @@ let calViewYM = (function(){const d=new Date();return {y:d.getFullYear(),m:d.get
 function initSb(url,key){
   const s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-  s.onload=()=>{try{sbClient=supabase.createClient(url,key);dbSt(true);syncFrom();}catch(e){dbSt(false,'err');}};
+  s.onload=()=>{try{sbClient=supabase.createClient(url,key);dbSt(true);syncFrom().then(()=>startAutoSync());}catch(e){dbSt(false,'err');}};
   s.onerror=()=>dbSt(false,'err');
   document.head.appendChild(s);
 }
@@ -976,9 +984,66 @@ function dbSt(ok,t){
     else{dot.className='db-dot';lbl.textContent='local';}
   });
 }
-async function syncTo(){if(!sbClient)return;try{await sbClient.from('dashboard').upsert({id:'main',data:JSON.stringify(S)});dbSt(true);}catch(e){dbSt(false,'err');}}
-async function syncFrom(){if(!sbClient)return;try{const{data}=await sbClient.from('dashboard').select('data').eq('id','main').single();if(data?.data){S={...S,...JSON.parse(data.data)};migrate();render();}}catch(e){}}
+let _lastSyncAt=0;let _syncTimer=null;let _syncInFlight=false;
+async function syncTo(){
+  if(!sbClient)return;
+  try{
+    await sbClient.from('dashboard').upsert({id:'main',data:JSON.stringify(S)});
+    _lastSyncAt=Date.now();dbSt(true);updateSyncLabel();
+  }catch(e){dbSt(false,'err');}
+}
+async function syncFrom(opts={}){
+  if(!sbClient||_syncInFlight)return;
+  _syncInFlight=true;
+  try{
+    const{data,error}=await sbClient.from('dashboard').select('data').eq('id','main').single();
+    if(error)throw error;
+    if(data?.data){
+      const remote=JSON.parse(data.data);
+      // マージ（remote優先・新しいIDのlocal-onlyアイテムは保持）
+      const merged=mergeStates(S,remote);
+      S=merged;
+      migrate();
+      _lastSyncAt=Date.now();
+      render();updateSyncLabel();
+    }
+    dbSt(true);
+  }catch(e){if(opts.alertOnError)alert('同期エラー: '+e.message);dbSt(false,'err');}
+  finally{_syncInFlight=false;}
+}
+function mergeStates(localS,remoteS){
+  // remote をベースに、local にしかない（remoteに無いID）アイテムだけ追加で維持
+  // これで他端末の変更が反映されつつ、自分のローカル追加もまだ送信中なら残る
+  const out={...remoteS};
+  ['tasks','schedule','habits','memos','diaries','projects','users'].forEach(k=>{
+    const remoteArr=Array.isArray(remoteS[k])?remoteS[k]:[];
+    const localArr=Array.isArray(localS[k])?localS[k]:[];
+    const remoteIds=new Set(remoteArr.map(x=>x.id));
+    const localOnly=localArr.filter(x=>!remoteIds.has(x.id));
+    out[k]=[...remoteArr,...localOnly];
+  });
+  // currentUserId は端末ごとに固有（リモートの値で上書きしない）
+  out.currentUserId=localS.currentUserId||remoteS.currentUserId;
+  return out;
+}
 function save(){localStorage.setItem(LSKEY,JSON.stringify(S));syncTo();try{scheduleNotifications();}catch(e){}}
+function updateSyncLabel(){
+  ['d','m'].forEach(p=>{
+    const lbl=document.getElementById('db-lbl-'+p);
+    if(lbl&&_lastSyncAt){
+      const ago=Math.floor((Date.now()-_lastSyncAt)/1000);
+      lbl.textContent=ago<5?'同期完了':`${ago<60?ago+'秒前':Math.floor(ago/60)+'分前'}`;
+    }
+  });
+}
+function startAutoSync(){
+  if(_syncTimer)clearInterval(_syncTimer);
+  _syncTimer=setInterval(()=>{if(document.visibilityState==='visible')syncFrom();},20000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncFrom();});
+  window.addEventListener('focus',()=>syncFrom());
+  setInterval(updateSyncLabel,5000);
+}
+function manualSync(){syncFrom({alertOnError:true}).then(()=>alert('最新の状態に更新しました'));}
 function load(){try{const d=localStorage.getItem(LSKEY);if(d)S={...S,...JSON.parse(d)};}catch(e){}}
 // migrate() is called after load() in init()
 
@@ -999,19 +1064,25 @@ function toggleShowAllUsers(){const cur=showAllUsers();localStorage.setItem('sho
 function openUserModal(){
   const list=document.getElementById('user-list');
   if(list){
-    list.innerHTML=S.users.map(u=>`<div class="user-row" onclick="switchUser(${u.id})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid ${u.id===S.currentUserId?'var(--acc)':'var(--bd)'};border-radius:8px;margin-bottom:6px;cursor:pointer;background:${u.id===S.currentUserId?'rgba(181,90,30,.06)':'transparent'}">
+    list.innerHTML=S.users.map(u=>{
+      const counts=`タスク${S.tasks.filter(x=>x.userId===u.id).length}/予定${S.schedule.filter(x=>x.userId===u.id).length}`;
+      return `<div class="user-row" onclick="switchUser(${u.id})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid ${u.id===S.currentUserId?'var(--acc)':'var(--bd)'};border-radius:8px;margin-bottom:6px;cursor:pointer;background:${u.id===S.currentUserId?'rgba(181,90,30,.06)':'transparent'}">
       <div style="width:32px;height:32px;border-radius:50%;background:${u.color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">${escapeHTML(u.initial)}</div>
-      <div style="flex:1;font-size:13px;color:var(--ink)">${escapeHTML(u.name)}${u.id===S.currentUserId?' <span style="font-size:10px;color:var(--acc);margin-left:4px">(現在)</span>':''}</div>
+      <div style="flex:1;font-size:13px;color:var(--ink)">${escapeHTML(u.name)}${u.id===S.currentUserId?' <span style="font-size:10px;color:var(--acc);margin-left:4px">(現在)</span>':''}<div style="font-size:10px;color:var(--ink3);margin-top:1px">${counts}</div></div>
       ${S.users.length>1?`<button class="tdel" onclick="event.stopPropagation();deleteUser(${u.id})" title="削除">✕</button>`:''}
-    </div>`).join('');
+    </div>`;}).join('');
   }
+  // 表示モードボタンの状態を更新
+  const sa=document.getElementById('show-all-btn');
+  if(sa)sa.textContent=showAllUsers()?'✅ 全員のものを表示中':'⚪ 自分＋共有のみ表示中';
   openModal('user-modal');
 }
 function addUserFromForm(){
   const name=document.getElementById('user-name').value.trim();
   const color=document.getElementById('user-color').dataset.color||'#8b6496';
   if(!name){document.getElementById('user-name').focus();return;}
-  const id=Math.max(0,...S.users.map(u=>u.id||0))+1;
+  // タイムスタンプ＋乱数でID重複を防止（複数端末で同時追加対応）
+  const id=Date.now()+Math.floor(Math.random()*1000);
   S.users.push({id,name,color,initial:name[0]||'?'});
   document.getElementById('user-name').value='';
   save();openUserModal();render();
@@ -2408,7 +2479,7 @@ async function forceUpdate(){
   window.location.reload(true);
 }
 init();
-// build: full v23 (マルチユーザー対応・AI共有判定)
+// build: full v24 (自動同期・全ユーザー表示UX改善・ID重複防止)
 </script>
 </body>
 </html>
